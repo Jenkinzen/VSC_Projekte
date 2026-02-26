@@ -1,0 +1,14 @@
+﻿# Java build output
+**/target/
+*.class
+
+# Python cache/build
+**/__pycache__/
+*.py[cod]
+
+# Local JDK bundles (do not version)
+Java Projekte/oracleJdk-*/
+
+# OS/editor
+.DS_Store
+Thumbs.db
