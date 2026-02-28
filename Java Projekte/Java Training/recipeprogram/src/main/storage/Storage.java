@@ -5,7 +5,7 @@ import main.model.Rezept;
 import main.model.Zutat;
 
 public class Storage     // Klassenrumpf = Nur das Grundkonzept, das Gerüst oder die Blaupause einer Klasse,
-{                       // beschreibt wie Objekte aussehen, aber kann selbst
+{                       // beschreibt wie Objekte aussehen, aber kann selbst nichts.
 
 
     // früher wär es ArrayList<Rezept> rezepte = new ArrayList<Rezept>(); gewesen,
