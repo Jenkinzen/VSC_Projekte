@@ -3,24 +3,50 @@ package main.model;
 
 public class Zutat
 {
-    String name;
+    String zutatenname;
     String menge;
     String einheit;
     
+
+    //public String[] zutatformatieren(String namex,String menge,String einheit)
+    
+
         @Override
     public String toString(){
-        return menge + "" + einheit + " " + name;
+        return menge + " " + einheit + " " + zutatenname + "\n";
     }
 
-    public Zutat(String einheit,String menge,String name)
+
+
+
+
+
+    public Zutat(String menge,String einheit,String zutatenname)
     {
-        this.name = name;
+        this.zutatenname = zutatenname;
         this.menge = menge;
         this.einheit = einheit;
     }
+    
     public void anzeigen()
     {
-        System.out.println(menge + " " + einheit + " " + name);
+        System.out.println(menge + "" + einheit + "" + zutatenname);
+    }
+
+    public String getName()
+    {
+        return zutatenname;
+        }
+
+        public String getMenge()
+        {
+            return menge;
+        }
+
+        public String getEinheit()
+        {
+            return einheit;
     }
 }
+
 

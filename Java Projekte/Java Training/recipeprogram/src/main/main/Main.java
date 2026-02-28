@@ -1,5 +1,6 @@
 package main.main;
 
+import main.model.Rezept;
 import main.storage.Storage;
 
 public class Main {
@@ -10,8 +11,17 @@ public class Main {
         // also die Daten des Storage werden in das programm geladen. 
         // (Klasse) = Bauplan des Hauses 
         // (Storage storage = new Storage();) = baut das Haus 
-        Storage storage = new Storage();        
-        System.out.println(storage.getRezepte());
+        Storage storage = new Storage();  
+             
+        for (Rezept r : storage.getRezepte()) 
+        {
+            System.out.println(r.getName());
+        }
+        
+        for (Rezept r : storage.getRezepte()) 
+        {
+            System.out.println(r);
+        }
 
     }
 }
