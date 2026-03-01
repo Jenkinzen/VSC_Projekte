@@ -1,6 +1,7 @@
 package main.model;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Rezept
     {
@@ -8,6 +9,7 @@ public class Rezept
         ArrayList<Zutat> zutaten;  // so einfach integriert man eine Klasse in eine andere wtf
         String zubereitung;            // ArrayList<Zutat> zutaten > sonst kann man nur einzelne Zutaten speichern, keine Liste.
         String notizen;
+
 
         public String[] zubereitungsschritteformatieren (String zubereitung)
         {       
@@ -91,5 +93,10 @@ public class Rezept
         public String getNotizen()
         {
             return notizen;
+        }
+        
+        public List<Zutat> getZutaten()
+        {
+           return zutaten;
         }
     }

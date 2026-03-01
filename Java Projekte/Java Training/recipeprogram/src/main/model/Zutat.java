@@ -33,12 +33,15 @@ public class Zutat
         System.out.println(menge + "" + einheit + "" + zutatenname);
     }
 
-    public String getName()
+    
+
+
+    public String getZutatName()
     {
         return zutatenname;
         }
 
-        public String getMenge()
+        public String getMenge() 
         {
             return menge;
         }

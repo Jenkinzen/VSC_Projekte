@@ -6,7 +6,7 @@ import main.service.Service;
 import main.storage.Storage;
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args){
         // generiert aus der theoretischen Klasse ein praktisches Objekt
         // Storage wird hier quasi im aktiven Programm aufrufen initialisiert,
         // also die Daten des Storage werden in das programm geladen. 
@@ -26,5 +26,11 @@ public class Main {
             System.out.println(r);
         }
 
+        List<String> ergebnis2 = service.filterNachRezeptZutat("sal");
+
+        for (String name : ergebnis2){
+            System.out.println(name);
+        }
+    
     }
 }
