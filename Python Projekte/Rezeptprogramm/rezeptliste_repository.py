@@ -6,14 +6,21 @@ from typing import List, Optional
 
 import rezeptliste_model as model
 
+#also... das Repo ist NICHT der Speicher der dictionaries etc. 
+#Das Repo ist der aktive Objektspeicher während der Programmausführung, also hat z.b. json dictionary und die umwandlung dessen Inhalt mit Objekten noch nichts
+#mit dem Repo zu tun sondern nur mit der json Datei und Python, erst wenn Python das dict in Objekte umwandelt und DANN im Repo speichert 
+# JSON DICT = (der passive Langzeitspeicher auf der Festplatte wo die Infos liegen)
+# PYTHON -> wandelt Infos aus dem JSON Dict in Objekte um und steckt sie ins Repo.
+# REPOSITORY = (der aktive RAM-Memory Speicher während Ausführung)
 
 class JsonRezeptRepository:
-    def __init__(self, datei: Path):
-        self._datei = datei
-        self._gerichte: List[model.Rezept] = []
+    def __init__(self, datei: Path):            # datei: Path  -> ich erwarte ein "Path" Objekt, also den Pfad zur Datei ( hier der Pfad zur rezepte.json)
+        self._datei = datei                     # referenz auf den Pfad wo gespeichert wird ( ohne das hier wüssten die methoden save und load nicht WO gesafet und geloaded wird
+                                                # [ein wirklicher Pfad zu einem Speicherplatz auf der Festplatte, ist so anders für mich weils vorher ja nur referenzen auf andere Layer waren ])
+        self._gerichte: List[model.Rezept] = []         # quasi List<model.Rezept> = new Arraylist<>() in python version | Neue leere Liste wird erstellt in die dann die Rezepte aus dem repo rein geladen werden.
 
     # ---- Zugriff ----
-    def alle(self) -> List[model.Rezept]:
+    def alle(self) -> List[model.Rezept]:                       # def alle(self) -> List[model.Rezept]: ist quasi DATENTYP OUTPUT: ArrayList<Model.Rezept> METHODENNAME: alle INPUTPARAMETER(self)[self im bezug auf die repository class, also Repository Objekt].
         # Optional: return list(self._gerichte) um Kopie zu geben
         return self._gerichte
 
@@ -25,10 +32,10 @@ class JsonRezeptRepository:
         self._gerichte.remove(rezept)
 
     def find_by_name(self, rezeptname: str) -> Optional[model.Rezept]:
-        needle = rezeptname.strip().lower()
-        for rezept in self._gerichte:
-            if rezept.name.strip().lower() == needle:
-                return rezept
+        needle = rezeptname.strip().lower()                             #eingegebener Rezeptname der gesucht wird.
+        for rezept in self._gerichte:                                   # rezept als schleifenvariable
+            if rezept.name.strip().lower() == needle:                   # wenn rezeptname in der Liste == gesuchter Begriff , 
+                return rezept                                           # return rezept.
         return None
 
     # ---- Persistenz ----

@@ -46,7 +46,7 @@ def gang_validieren(gerichte, gangeingabe):
 def filter_rezepte_nach_gericht(repo: JsonRezeptRepository, gericht: str) -> List[model.Rezept]:
     """wollte eigentlich mit "any" arbeiten, aber teiltreffer ("Bro" eingabe zeigt "Brokkoli" an)
     werden auch durch "in" ermöglicht. any macht kein sinn weil gerichte.Name keine Liste
-     sondern ein String ist, bei Zutaten machte es Sinn weil Zutaten eine Liste ist.(any = irgendeins aus (der liste)/ in = irgendetwas in (string))
+     sondern ein String ist, bei Zutaten machte es Sinn weil Zutaten eine Liste ist.(any = irgendeins aus (der liste)/ in = irgendetwas im (string))
      """
     gericht = gericht.strip().lower()
     return [r for r in repo.alle() if gericht in r.name.strip().lower()]

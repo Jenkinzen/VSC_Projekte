@@ -1,15 +1,9 @@
-import rezeptliste_services as service
-
 from pathlib import Path
 import rezeptliste_services as service
 from rezeptliste_repository import JsonRezeptRepository
 
-DATEI = Path(__file__).resolve().parent.parent.parent / "Data"/ "RezeptData"/ "rezepte.json"
 
-repo = JsonRezeptRepository(DATEI)
-repo.load()
 
-neustart = True
 
 def eingabezahl_pruefen(prompt,min_value=None,max_value=None):
     while True:
@@ -31,8 +25,6 @@ def eingabezahl_pruefen(prompt,min_value=None,max_value=None):
 
         return value
 
-
-
 def filter_auswaehlen():
     return eingabezahl_pruefen("Nach welchen Kriterien soll die\n"
                 "Rezeptauswahl gefiltert werden?\n\n"
@@ -45,7 +37,9 @@ def filter_auswaehlen():
                  max_value=3)
 
 
-def rezepte_ansehen_nach_gang():
+###### ANZEIGE - MENÜ - FUNKTIONEN ################################################################################################################################################################
+
+def rezepte_ansehen_nach_gang(repo):
     while True:
         gang_map = {1: "vorspeise",2: "hauptspeise",3:"dessert"}
         gangeingabe = eingabezahl_pruefen("Welchen Gang möchten Sie wählen?\n\n"
@@ -60,7 +54,9 @@ def rezepte_ansehen_nach_gang():
         if gangeingabe == 0:
             return
 
-        gangeingabe = gang_map[gangeingabe]
+        gangeingabe = gang_map[gangeingabe]      #wandelt gangeingabe (1,2,3) durch key-value paare die in gang_map oben festgelegt sind in den Gang Namen um(vorspeise,hauptspeise,dessert) 
+                                                 # ->heißt mapping, kommt wahrscheinlich durch die "HashMaps" bei Java so, oder beide heißen so wegen irgendwas früherem.
+                                                 #habs gegooglet -> to map = zuordnen oder verknüpfen 
 
         
         
@@ -94,7 +90,7 @@ def rezepte_ansehen_nach_gang():
             except ValueError:
                 print("Bitte eine Zahl eingeben.")
 
-def rezepte_ansehen_nach_zutaten():
+def rezepte_ansehen_nach_zutaten(repo):
     while True:
         zutat = [z.strip() for z in input("Welche Zutat(en) möchten Sie wählen?\nBitte Zutaten mit  \",\"  trennen.\n\n" 
         "0-[Zurück]\n").strip().lower().split(",")]
@@ -133,7 +129,7 @@ def rezepte_ansehen_nach_zutaten():
                 print("Bitte eine Zahl eingeben.")  
                 #hier brauch man kein continue weil die Schleife hier eh endet und dann wieder anfängt
             
-def rezepte_ansehen_nach_Gericht():
+def rezepte_ansehen_nach_Gericht(repo):
     while True:
         print()
         for i, rezept in enumerate(service.alle_rezepte(repo), start=1):
@@ -158,8 +154,7 @@ def rezepte_ansehen_nach_Gericht():
         for zeile in rezepte.anzeigen():
             print(zeile)
 
-
-def rezepte_ansehen():
+def rezepte_ansehen(repo):
     while True:
         filterwahl = filter_auswaehlen()
 
@@ -167,22 +162,26 @@ def rezepte_ansehen():
             return
         
         elif filterwahl == 1:
-            rezepte_ansehen_nach_Gericht()
+            rezepte_ansehen_nach_Gericht(repo)
             continue
 
         elif filterwahl == 2:
-            rezepte_ansehen_nach_zutaten()
+            rezepte_ansehen_nach_zutaten(repo)
             continue
         
         elif filterwahl == 3:
-            rezepte_ansehen_nach_gang()
+            rezepte_ansehen_nach_gang(repo)
             continue
         
         
         else:
             print("Ungültige Auswahl.")
 
-def rezept_einfuegen():
+
+
+####### SPEICHERVERWALTUNGS - MENÜ - FUNKTIONEN ###################################################################################################################################################
+
+def rezept_einfuegen(repo):
     rezeptname = input("Wie heißt das Rezept?\n\n" \
     "0-[Zurück]\n\n"
     "Eingabe:").strip()
@@ -206,7 +205,7 @@ def rezept_einfuegen():
     print(f"{rezept.name} wurde eingefügt!")
     return
 
-def rezept_loeschen():
+def rezept_loeschen(repo):
         for i, rezept in enumerate(service.alle_rezepte(repo), start=1):
             print(f"{i}. {rezept.name}")
         
@@ -240,46 +239,8 @@ def rezept_loeschen():
                 break
 
 
-
-
 "service.rezept_laden(repo)"
 # Vor dem Programm ausführen um die aktuellste Rezeptliste aus JSON geladen zu haben.
 # Mittlerweile überflüssig weil die funktion durch die Einrichtung vom Repository in dessen Funktion
 # load.repo() bereits integriert ist. (steht oben irgendwo)
-
-
-
-while neustart:
-
-    Menueauswahl = input("Möchten sie ein Rezept \n\n"
-    "1-[ansehen]\n"
-    "2-[einfügen]\n"
-    "3-[löschen]\n\n"
-    "Eingabe:")
-
-
-
-    if Menueauswahl == "1":
-
-        rezepte_ansehen()
-
-
-
-    elif Menueauswahl == "2":
-
-        rezept_einfuegen()
-
-
-
-    elif Menueauswahl == "3":
-        
-        rezept_loeschen()
-        
-
-
-    else:
-        print("Ungültige Auswahl!")
-        continue
-        
-
 
