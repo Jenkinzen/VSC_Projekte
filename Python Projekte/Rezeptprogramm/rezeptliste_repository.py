@@ -31,10 +31,10 @@ class JsonRezeptRepository:
     def remove(self, rezept: model.Rezept) -> None:
         self._gerichte.remove(rezept)
 
-    def find_by_name(self, rezeptname: str) -> Optional[model.Rezept]:
+    def find_by_input(self, rezeptname: str) -> Optional[model.Rezept]:
         needle = rezeptname.strip().lower()                             #eingegebener Rezeptname der gesucht wird.
         for rezept in self._gerichte:                                   # rezept als schleifenvariable
-            if rezept.name.strip().lower() == needle:                   # wenn rezeptname in der Liste == gesuchter Begriff , 
+            if needle in rezept.name.strip().lower():                   # wenn rezeptname in der Liste == gesuchter Begriff , 
                 return rezept                                           # return rezept.
         return None
 

@@ -23,7 +23,7 @@ def rezept_nach_index(rezepte: List[model.Rezept], index: int) -> Optional[model
 
 def rezept_finden(repo: JsonRezeptRepository, rezeptname: str) -> Optional[model.Rezept]:
 
-    return repo.find_by_name(rezeptname)
+    return repo.find_by_input(rezeptname)
 
 
 ######## VALIDIERUNG ##############################################################################################################################################
