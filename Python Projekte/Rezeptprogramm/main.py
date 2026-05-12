@@ -3,7 +3,9 @@ from pathlib import Path
 import rezeptliste_services as service
 from rezeptliste_repository import JsonRezeptRepository
 from fastapi import FastAPI
-
+from typing import List
+from fastapi import Query
+import rezeptliste_model as model
 app = FastAPI()  #erstellt API Anwendung
 
 
@@ -35,6 +37,8 @@ def root():
 def alle_rezepte_endpoint():
     return repo.alle()
 
+
+
 @app.get("/rezepte/{nummer}")
 def rezepte_nach_index_endpoint(nummer: int):
     return service.rezept_nach_index(repo.alle(), nummer)           # repo.alle() -> yo hier ich übergeb dir das komplette repo! (macht sinn bei der funktion die ALLES im repo anzeigen soll)
@@ -43,6 +47,35 @@ def rezepte_nach_index_endpoint(nummer: int):
 def rezepte_finden_endpoint(sucheingabe: str):
     return service.rezept_finden(repo, sucheingabe)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
 
+
+
+@app.get("/rezepte/filter/gerichte/{gericht}")
+def filter_rezepte_nach_gericht_endpoint(gericht: str):
+    return service.filter_rezepte_nach_gericht(repo,gericht)
+
+@app.get("/rezepte/filter/gang/{gang}")
+def filter_rezepte_nach_gang_endpoint(gang: str):
+    return service.filter_rezepte_nach_gang(repo,gang)
+
+@app.get("/rezepte/filter/zutaten")                                 # weil es mehrere inputs gibt brauch man hier kein {bla}, das klappt nur mit 1 input. Siehe API -> die regelt das automatisch
+def filter_rezepte_nach_zutaten_endpoint(zutaten: List[str] = Query()):
+    return service.filter_rezepte_nach_zutaten(repo,zutaten)
+
+@app.post("/rezepte/speicher/erstellen")
+def rezept_erstellen_endpoint(rezept_daten: dict):      
+    """ macht aus dem JSON ein Python dict bei abruf (seit API startet ja alles über HTTPS/API also ist alles am Anfang eine JSON und muss
+    von JSON zum Python dict und dann zum Objekt umgewandelt werden. Die Anleitung für dict -> Objekt ist der unten folgende Code.)"""
+    zutaten = [model.Zutaten(z["name"],z.get("menge"),z.get("einheit")) for z in rezept_daten.get("zutaten", [])] 
+    """        Erzeuge Zutatenobjekt(z["name"] -> holt namen, gibt es immer,deshalb brauch man kein .get) z.get menge und einheit mit get 
+    damit es bei leeren feldern nicht zum error kommt sondern "none" ausgefüllt wird.
+                                                                        for z in rezept_daten.get("zutaten",[])] -> 
+                                                                        nimm die zutaten dicts (rezept_daten.get("zutaten",
+                                                                        und wenn es keine gibt,leere Liste -> [])]"""
+    rezept = model.Rezept(name = rezept_daten["name"],zutaten=zutaten,zubereitung=rezept_daten["zubereitung"]
+                          ,gang=rezept_daten["gang"],notizen=rezept_daten["notizen"])
+    repo.add(rezept)
+    repo.save()
+    return rezept 
 
 def cli_starten():
     neustart = True

@@ -99,7 +99,7 @@ def filter_rezepte_nach_zutaten(repo: JsonRezeptRepository, zutateneingabe: List
                 if len(teile) >= 2 -> insofern es genau oder mehr als 2 teile gibt.
     """
     
-def rezepterstellung(
+def rezept_erstellen(
     repo: JsonRezeptRepository,
     rezeptname: str,
     zutaten_strings: List[str],
