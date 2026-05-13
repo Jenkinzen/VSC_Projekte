@@ -61,21 +61,17 @@ def filter_rezepte_nach_gang_endpoint(gang: str):
 def filter_rezepte_nach_zutaten_endpoint(zutaten: List[str] = Query()):
     return service.filter_rezepte_nach_zutaten(repo,zutaten)
 
+#API macht alles, geht so aber SoC konform sollte rezept_erstellen die Buisnesslogik haben und API nur senden.
 @app.post("/rezepte/speicher/erstellen")
-def rezept_erstellen_endpoint(rezept_daten: dict):      
-    """ macht aus dem JSON ein Python dict bei abruf (seit API startet ja alles über HTTPS/API also ist alles am Anfang eine JSON und muss
-    von JSON zum Python dict und dann zum Objekt umgewandelt werden. Die Anleitung für dict -> Objekt ist der unten folgende Code.)"""
-    zutaten = [model.Zutaten(z["name"],z.get("menge"),z.get("einheit")) for z in rezept_daten.get("zutaten", [])] 
-    """        Erzeuge Zutatenobjekt(z["name"] -> holt namen, gibt es immer,deshalb brauch man kein .get) z.get menge und einheit mit get 
-    damit es bei leeren feldern nicht zum error kommt sondern "none" ausgefüllt wird.
-                                                                        for z in rezept_daten.get("zutaten",[])] -> 
-                                                                        nimm die zutaten dicts (rezept_daten.get("zutaten",
-                                                                        und wenn es keine gibt,leere Liste -> [])]"""
-    rezept = model.Rezept(name = rezept_daten["name"],zutaten=zutaten,zubereitung=rezept_daten["zubereitung"]
-                          ,gang=rezept_daten["gang"],notizen=rezept_daten["notizen"])
-    repo.add(rezept)
-    repo.save()
-    return rezept 
+def rezept_erstellen_endpoint(rezept_daten: dict):      #rezept_daten ist die variable für die eingegebenen Daten des neu zu erstellenden Rezeptes 
+    return service.rezept_erstellen(repo,rezept_daten)
+
+@app.post("/rezepte/speicher/löschen")
+def rezept_löschen_endpoint(nummer: int):
+    pass
+
+    
+
 
 def cli_starten():
     neustart = True

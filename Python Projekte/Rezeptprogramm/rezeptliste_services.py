@@ -101,28 +101,16 @@ def filter_rezepte_nach_zutaten(repo: JsonRezeptRepository, zutateneingabe: List
     
 def rezept_erstellen(
     repo: JsonRezeptRepository,
-    rezeptname: str,
-    zutaten_strings: List[str],
-    zubereitung: str,
-    gang: str,
-    notizen: str,
+    rezept_daten: dict,
 ) -> model.Rezept:
-    zutatenliste: List[model.Zutaten] = []
-    for zs in zutaten_strings:
-        teile = zs.split()
-        if not teile:
-            continue
-        zutatenname = " ".join(teile[:-2]) if len(teile) > 2 else teile[0]
-        menge = teile[-2] if len(teile) > 2 else None
-        einheit = teile[-1] if len(teile) >= 2 else None
-        zutatenliste.append(model.Zutaten(name=zutatenname, menge=menge, einheit=einheit))
-
+    zutaten = [model.Zutaten(z["name"],z.get("menge"),z.get("einheit")) for z in rezept_daten.get("zutaten",[])]
+    
     neues_rezept = model.Rezept(
-        name=rezeptname,
-        zutaten=zutatenliste,
-        zubereitung=zubereitung,
-        notizen=notizen,
-        gang=gang.title(),
+        name=rezept_daten["name"],
+        zutaten=zutaten,
+        zubereitung=rezept_daten["zubereitung"],
+        notizen=rezept_daten["notizen"],
+        gang=rezept_daten["gang"],
     )
 
     repo.add(neues_rezept)
