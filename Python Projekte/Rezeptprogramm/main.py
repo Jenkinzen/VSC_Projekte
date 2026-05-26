@@ -67,9 +67,12 @@ def rezept_erstellen_endpoint(rezept_daten: dict):      #rezept_daten ist die va
     return service.rezept_erstellen(repo,rezept_daten)
 
 @app.post("/rezepte/speicher/löschen")
-def rezept_löschen_endpoint(nummer: int):
-    pass
+def rezept_löschen_endpoint(rezeptname: str):
+    return service.rezept_loeschen(repo,rezeptname)
 
+@app.post("/rezepte/speicher/update")
+def rezept_updaten_endpoint(rezept_daten: model.Rezept):
+    pass
     
 
 

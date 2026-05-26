@@ -23,15 +23,34 @@ def rezept_nach_index(rezepte: List[model.Rezept], index: int) -> Optional[model
 
 def rezept_finden(repo: JsonRezeptRepository, rezeptname: str) -> Optional[model.Rezept]:
 
-    return repo.find_by_input(rezeptname)
+    return repo.find_recipe_by_input(rezeptname)
 
 
 ######## VALIDIERUNG ##############################################################################################################################################
+def check_recipename(repo: JsonRezeptRepository,rezeptname) -> bool:
+    if repo.find_recipe_by_input(rezeptname):
+        return True
+    return False
 
-def gang_pruefen(gangeingabe):
+def check_attribute(repo: JsonRezeptRepository,rezeptname,attributname) -> bool:
+    if hasattr(rezept_finden(repo,rezeptname),attributname) is not None:
+        return True
+    return False
+
+def check_ingredient_attribute(repo: JsonRezeptRepository,recipename,ingredientname,attributename) -> bool:
+    if hasattr(repo.find_ingredient_in_one_recipe(recipename,ingredientname),attributename) is not None:
+        return True
+    return False
+
+def check_ingredient_in_recipe(repo: JsonRezeptRepository,recipename,ingredientname) -> bool:
+    if repo.find_ingredient_in_one_recipe(recipename,ingredientname)is not None:
+        return True
+    return False
+
+def check_course(gangeingabe):
     return gangeingabe.lower().strip() in storage.GUELTIGE_GAENGE
 
-def gang_validieren(gerichte, gangeingabe):
+def validate_course(gerichte, gangeingabe):
     """wenn irgendwas (any) in rezept.Gang das beinhaltet was der input war dann gibs raus
    any ----> auch wenn man "des" eingibt zeigt er dessert an weil des dadrin steckt.
    ohne any würde er dann nichts raus geben."""
@@ -117,11 +136,37 @@ def rezept_erstellen(
     repo.save()
     return neues_rezept
 
-"""def rezept_laden():
-    storage.lade_rezepte()
-    
-    Ist jetzt hinfällig da diese Funktion von repo übernommen wird."""
+def rezept_loeschen(repo: JsonRezeptRepository, rezeptname : str) -> None:
 
-def rezept_loeschen(repo: JsonRezeptRepository, rezept: model.Rezept) -> None:
+    rezept = rezept_finden(repo,rezeptname)
+
+    if rezept is None:
+        return None
+    
     repo.remove(rezept)
     repo.save()
+
+def rezept_updaten(repo: JsonRezeptRepository, gesuchtesrezept: str,aenderung:str,rezeptattribut:str,gesuchtezutat:str|None = None,zutatenattribut:str| None = None ) -> bool:
+    updaterezept = rezept_finden(repo,gesuchtesrezept)
+    if updaterezept is None or rezeptattribut is None:
+        return  False
+    else:
+        if rezeptattribut != "zutaten":
+            if not hasattr(updaterezept,rezeptattribut):
+                return False
+            setattr(updaterezept,rezeptattribut,aenderung)
+            
+
+        if rezeptattribut == "zutaten" and zutatenattribut and gesuchtezutat is not None:
+            for xyz in updaterezept.zutaten:
+                if not hasattr(xyz,zutatenattribut):
+                    return False
+                if xyz.name.lower().strip() == gesuchtezutat.lower().strip():
+                    setattr(xyz,zutatenattribut,aenderung)
+                    repo.save()
+                    return True
+            return False
+    
+    repo.save()
+    return True
+

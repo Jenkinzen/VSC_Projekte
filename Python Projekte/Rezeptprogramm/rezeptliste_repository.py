@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import rezeptliste_model as model
-
+import rezeptliste_services as service
 #also... das Repo ist NICHT der Speicher der dictionaries etc. 
 #Das Repo ist der aktive Objektspeicher während der Programmausführung, also hat z.b. json dictionary und die umwandlung dessen Inhalt mit Objekten noch nichts
 #mit dem Repo zu tun sondern nur mit der json Datei und Python, erst wenn Python das dict in Objekte umwandelt und DANN im Repo speichert 
@@ -31,11 +31,31 @@ class JsonRezeptRepository:
     def remove(self, rezept: model.Rezept) -> None:
         self._gerichte.remove(rezept)
 
-    def find_by_input(self, rezeptname: str) -> Optional[model.Rezept]:
-        needle = rezeptname.strip().lower()                             #eingegebener Rezeptname der gesucht wird.
+    def find_recipe_by_input(self, recipename: str) -> Optional[model.Rezept]:
+
+        needle = recipename.strip().lower()                             #eingegebener Rezeptname der gesucht wird.
         for rezept in self._gerichte:                                   # rezept als schleifenvariable
             if needle in rezept.name.strip().lower():                   # wenn rezeptname in der Liste == gesuchter Begriff , 
                 return rezept                                           # return rezept.
+        return None
+
+    def find_ingredient_in_all_recipe(self, ingredientname: str) -> Optional[model.Zutaten]:
+        zutatstrilo = ingredientname.strip().lower()
+        for rezept in self._gerichte:
+            for zutat in rezept.zutaten:
+                if zutatstrilo == zutat.name.strip().lower():
+                    return zutat
+        return None
+    
+    def find_ingredient_in_one_recipe(self, recipename:str,ingredientname:str) -> Optional[model.Zutaten]:
+        rezeptnamestrilo = recipename.strip().lower()
+        zutatnamestrilo = ingredientname.strip().lower()
+        for rezept in self._gerichte:
+            if rezeptnamestrilo == rezept.name.strip().lower():
+                for zutat in rezept.zutaten:
+                    if zutatnamestrilo == zutat.name.lower().strip():
+                        return zutat
+                return None    
         return None
 
     # ---- Persistenz ----

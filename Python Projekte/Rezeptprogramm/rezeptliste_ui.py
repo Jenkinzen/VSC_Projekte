@@ -196,12 +196,20 @@ def rezept_einfuegen(repo):
     gangeingabe = None
     while gangeingabe is None:
         eingabe = input("Ist es Vorspeise, Hauptspeise oder Dessert? ").strip().lower()
-        if service.gang_pruefen(eingabe):
+        if service.check_course(eingabe):
                 gangeingabe = eingabe
         else:
             print("Ungültige Auswahl! Bitte erneut eingeben.") 
 
-    rezept = service.rezepterstellung(repo,rezeptname, zutaten_strings, zubereitung,gangeingabe,notizen)
+    
+
+    rezept_daten = ({"name":rezeptname,
+                         "zutaten":zutaten_strings,
+                         "zubereitung":zubereitung,
+                         "notizen":notizen,
+                         "gang":gangeingabe})
+
+    rezept = service.rezept_erstellen(repo,rezept_daten)
     print(f"{rezept.name} wurde eingefügt!")
     return
 
@@ -230,7 +238,7 @@ def rezept_loeschen(repo):
             rueckversichern = input(f"Sind sie sicher, dass {rezept_zum_loeschen.name} gelöscht werden soll? Ja/Nein").strip().lower()
 
             if rueckversichern.strip().lower() == "ja":
-                    service.rezept_loeschen(repo,rezept_zum_loeschen)
+                    service.rezept_loeschen(repo,rezept_zum_loeschen.name)
                     print(f"{rezept_zum_loeschen} wurde gelöscht!")
                     return
             
@@ -238,9 +246,32 @@ def rezept_loeschen(repo):
                 print(f"{rezept_zum_loeschen} wird nicht gelöscht.")
                 break
 
+def rezept_updaten(repo):
+    rezeptname = input("Welches Gericht soll geupdatet werden?")
+    if service.check_recipename(repo,rezeptname):
+        rezeptoderzutatattribut = input("Möchten sie etwas im Rezept oder etwas in der Zutatenliste ändern?('zutat' oder 'rezept' eingeben)")
+        if rezeptoderzutatattribut == "zutat":
+            zutatauswahl = input("Welche Zutat möchten sie ändern?")
+            if service.check_ingredient_in_recipe(repo,rezeptname,zutatauswahl):
+                attributauswahl = input("Was möchten sie ändern?")
+                if service.check_ingredient_attribute(repo,rezeptname,zutatauswahl,attributauswahl):
+                    aenderungsauswahl = input("Neuer Eintrag: ")
+                    service.rezept_updaten(repo,rezeptname,aenderungsauswahl,"zutaten",zutatauswahl,attributauswahl)
+                    print("Eintrag wurde geändert.")
 
-"service.rezept_laden(repo)"
-# Vor dem Programm ausführen um die aktuellste Rezeptliste aus JSON geladen zu haben.
-# Mittlerweile überflüssig weil die funktion durch die Einrichtung vom Repository in dessen Funktion
-# load.repo() bereits integriert ist. (steht oben irgendwo)
+        elif rezeptoderzutatattribut == "rezept":
+            attributauswahl = input("Was möchten sie ändern?")
+            if service.check_attribute(repo,rezeptname,attributauswahl):
+                aenderungsauswahl = input("Neuer Eintrag: ")
+                service.rezept_updaten(repo,rezeptname,aenderungsauswahl,attributauswahl)
+        else:
+            print("Ungültige Auswahl!")
+            return
+    else:
+        print("Ungültiger Rezeptname!")
+        return
+
+
+#(repo: JsonRezeptRepository, gesuchtesrezept: str,aenderung:str,rezeptattribut:str,gesuchtezutat:str|None = None,zutatenattribut:str| None = None )
+
 
