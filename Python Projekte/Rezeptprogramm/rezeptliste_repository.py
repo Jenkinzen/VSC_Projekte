@@ -20,16 +20,16 @@ class JsonRezeptRepository:
         self._gerichte: List[model.Rezept] = []         # quasi List<model.Rezept> = new Arraylist<>() in python version | Neue leere Liste wird erstellt in die dann die Rezepte aus dem repo rein geladen werden.
 
     # ---- Zugriff ----
-    def alle(self) -> List[model.Rezept]:                       # def alle(self) -> List[model.Rezept]: ist quasi DATENTYP OUTPUT: ArrayList<Model.Rezept> METHODENNAME: alle INPUTPARAMETER(self)[self im bezug auf die repository class, also Repository Objekt].
+    def all(self) -> List[model.Rezept]:                       # def alle(self) -> List[model.Rezept]: ist quasi DATENTYP OUTPUT: ArrayList<Model.Rezept> METHODENNAME: alle INPUTPARAMETER(self)[self im bezug auf die repository class, also Repository Objekt].
         # Optional: return list(self._gerichte) um Kopie zu geben
         return self._gerichte
 
-    def add(self, rezept: model.Rezept) -> model.Rezept:
-        self._gerichte.append(rezept)
-        return rezept
+    def add(self, recipe: model.Rezept) -> model.Rezept:
+        self._gerichte.append(recipe)
+        return recipe
 
-    def remove(self, rezept: model.Rezept) -> None:
-        self._gerichte.remove(rezept)
+    def remove(self, recipe: model.Rezept) -> None:
+        self._gerichte.remove(recipe)
 
     def find_recipe_by_input(self, recipename: str) -> Optional[model.Rezept]:
 
@@ -39,7 +39,7 @@ class JsonRezeptRepository:
                 return rezept                                           # return rezept.
         return None
 
-    def find_ingredient_in_all_recipe(self, ingredientname: str) -> Optional[model.Zutaten]:
+    def find_ingredient_in_all_recipes(self, ingredientname: str) -> Optional[model.Zutaten]:
         zutatstrilo = ingredientname.strip().lower()
         for rezept in self._gerichte:
             for zutat in rezept.zutaten:

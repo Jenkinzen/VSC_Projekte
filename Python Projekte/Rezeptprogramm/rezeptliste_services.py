@@ -9,31 +9,31 @@ from rezeptliste_repository import JsonRezeptRepository
 ######## BASISZUGRIFF - LESEN #################################################################################################################################
 
  
-def alle_rezepte(repo: JsonRezeptRepository) -> List[model.Rezept]:
-    return repo.alle()
+def all_recipes(repo: JsonRezeptRepository) -> List[model.Rezept]:
+    return repo.all()
 
-def rezept_nach_index(rezepte: List[model.Rezept], index: int) -> Optional[model.Rezept]:
+def recipe_by_index(recipe: List[model.Rezept], index: int) -> Optional[model.Rezept]:
     """index = auswahl der Gerichtnummer im UI.
     wenn die auswahl größer gleich 1 ist und kleiner als die
-    gesamtanzahl an rezepten (len(rezepte) nummeriert die einzelnen Objekte in der Liste durch
+    gesamtanzahl an rezepten (len(recipe) nummeriert die einzelnen Objekte in der Liste durch
     ,hier halt die Rezepte in der Liste Gerichte)"""
-    if 1 <= index <= len(rezepte):
-        return rezepte[index - 1]
+    if 1 <= index <= len(recipe):
+        return recipe[index - 1]
     return None
 
-def rezept_finden(repo: JsonRezeptRepository, rezeptname: str) -> Optional[model.Rezept]:
+def find_recipe(repo: JsonRezeptRepository, recipename: str) -> Optional[model.Rezept]:
 
-    return repo.find_recipe_by_input(rezeptname)
+    return repo.find_recipe_by_input(recipename)
 
 
 ######## VALIDIERUNG ##############################################################################################################################################
-def check_recipename(repo: JsonRezeptRepository,rezeptname) -> bool:
-    if repo.find_recipe_by_input(rezeptname):
+def check_recipename(repo: JsonRezeptRepository,recipename) -> bool:
+    if repo.find_recipe_by_input(recipename):
         return True
     return False
 
 def check_attribute(repo: JsonRezeptRepository,rezeptname,attributname) -> bool:
-    if hasattr(rezept_finden(repo,rezeptname),attributname) is not None:
+    if hasattr(find_recipe(repo,rezeptname),attributname) is not None:
         return True
     return False
 
@@ -47,43 +47,43 @@ def check_ingredient_in_recipe(repo: JsonRezeptRepository,recipename,ingredientn
         return True
     return False
 
-def check_course(gangeingabe):
-    return gangeingabe.lower().strip() in storage.GUELTIGE_GAENGE
+def check_course(courseinput):
+    return courseinput.lower().strip() in storage.GUELTIGE_GAENGE
 
-def validate_course(gerichte, gangeingabe):
+def validate_course(recipes, courseinput):
     """wenn irgendwas (any) in rezept.Gang das beinhaltet was der input war dann gibs raus
    any ----> auch wenn man "des" eingibt zeigt er dessert an weil des dadrin steckt.
    ohne any würde er dann nichts raus geben."""
-    gang = gangeingabe.strip().lower()
+    gang = courseinput.strip().lower()
     return any(
         rezept.gang.strip().lower() == gang
-        for rezept in gerichte
+        for rezept in recipes
     )
 
 ######## FILTER ####################################################################################################################################################
 
-def filter_rezepte_nach_gericht(repo: JsonRezeptRepository, gericht: str) -> List[model.Rezept]:
+def filter_recipe_by_name(repo: JsonRezeptRepository, recipe: str) -> List[model.Rezept]:
     """wollte eigentlich mit "any" arbeiten, aber teiltreffer ("Bro" eingabe zeigt "Brokkoli" an)
     werden auch durch "in" ermöglicht. any macht kein sinn weil gerichte.Name keine Liste
      sondern ein String ist, bei Zutaten machte es Sinn weil Zutaten eine Liste ist.(any = irgendeins aus (der liste)/ in = irgendetwas im (string))
      """
-    gericht = gericht.strip().lower()
-    return [r for r in repo.alle() if gericht in r.name.strip().lower()]
+    recipe = recipe.strip().lower()
+    return [r for r in repo.all() if recipe in r.name.strip().lower()]
 
-def filter_rezepte_nach_gang(repo: JsonRezeptRepository, gangeingabe: str) -> List[model.Rezept]:
+def filter_recipe_by_course(repo: JsonRezeptRepository, courseinput: str) -> List[model.Rezept]:
     """Siehe filter_rezepte_nach_zutaten, selbe sache nur ohne aus einer liste(gerichte)
    eine weitere liste(wie unten die zutatenliste) aufrufen zu müssen."""
-    gang = gangeingabe.strip().lower()
-    return [r for r in repo.alle() if r.gang.strip().lower() == gang]
+    course = courseinput.strip().lower()
+    return [r for r in repo.all() if r.gang.strip().lower() == course]
 
-def filter_rezepte_nach_zutaten(repo: JsonRezeptRepository, zutateneingabe: List[str]) -> List[model.Rezept]:
+def filter_recipe_by_ingredient(repo: JsonRezeptRepository, ingredientinput: List[str]) -> List[model.Rezept]:
     """ rezept for rezept in storage.Gerichte > geh jedes rezept durch was gespeichert wurde.(s.Gerichte = rezeptsammlung / rezept for rezept = jedes Rezept einzeln durchgehen)
     any(zutat in einzelne_zutat = gibt es die gesuchten Zutaten im Rezept? ///// for einzelne_zutat in rezept.Zutaten) = guck jede Zutat des Rezepts an.
     all(any(bla)for zutat in zutaten) =  sind ALLE gesuchten Zutaten in diesem Rezept?""" 
-    zutatenwahl = [z.strip().lower() for z in zutateneingabe if z.strip()]
+    zutatenwahl = [z.strip().lower() for z in ingredientinput if z.strip()]
     return [
         rezept
-        for rezept in repo.alle()
+        for rezept in repo.all()
         if all(
             any(zutat in einzelne_zutat.name.strip().lower() for einzelne_zutat in rezept.zutaten)
             for zutat in zutatenwahl
@@ -118,51 +118,51 @@ def filter_rezepte_nach_zutaten(repo: JsonRezeptRepository, zutateneingabe: List
                 if len(teile) >= 2 -> insofern es genau oder mehr als 2 teile gibt.
     """
     
-def rezept_erstellen(
+def create_recipe(
     repo: JsonRezeptRepository,
-    rezept_daten: dict,
+    recipe_datas: dict,
 ) -> model.Rezept:
-    zutaten = [model.Zutaten(z["name"],z.get("menge"),z.get("einheit")) for z in rezept_daten.get("zutaten",[])]
+    zutaten = [model.Zutaten(z["name"],z.get("menge"),z.get("einheit")) for z in recipe_datas.get("zutaten",[])]
     
-    neues_rezept = model.Rezept(
-        name=rezept_daten["name"],
+    new_recipe = model.Rezept(
+        name=recipe_datas["name"],
         zutaten=zutaten,
-        zubereitung=rezept_daten["zubereitung"],
-        notizen=rezept_daten["notizen"],
-        gang=rezept_daten["gang"],
+        zubereitung=recipe_datas["zubereitung"],
+        notizen=recipe_datas["notizen"],
+        gang=recipe_datas["gang"],
     )
 
-    repo.add(neues_rezept)
+    repo.add(new_recipe)
     repo.save()
-    return neues_rezept
+    return new_recipe
 
-def rezept_loeschen(repo: JsonRezeptRepository, rezeptname : str) -> None:
+def delete_recipe(repo: JsonRezeptRepository, recipename : str) -> None:
 
-    rezept = rezept_finden(repo,rezeptname)
+    recipe = find_recipe(repo,recipename)
 
-    if rezept is None:
+    if recipe is None:
         return None
     
-    repo.remove(rezept)
+    repo.remove(recipe)
     repo.save()
 
-def rezept_updaten(repo: JsonRezeptRepository, gesuchtesrezept: str,aenderung:str,rezeptattribut:str,gesuchtezutat:str|None = None,zutatenattribut:str| None = None ) -> bool:
-    updaterezept = rezept_finden(repo,gesuchtesrezept)
-    if updaterezept is None or rezeptattribut is None:
+def update_recipe(repo: JsonRezeptRepository, searched_recipe: str,change:str,recipeattribute:str,searched_ingredient:str|None = None,ingredient_attribute:str| None = None ) -> bool:
+    updaterezept = find_recipe(repo,searched_recipe)
+    if updaterezept is None or recipeattribute is None:
         return  False
     else:
-        if rezeptattribut != "zutaten":
-            if not hasattr(updaterezept,rezeptattribut):
+        if recipeattribute != "zutaten":
+            if not hasattr(updaterezept,recipeattribute):
                 return False
-            setattr(updaterezept,rezeptattribut,aenderung)
+            setattr(updaterezept,recipeattribute,change)
             
 
-        if rezeptattribut == "zutaten" and zutatenattribut and gesuchtezutat is not None:
+        if recipeattribute == "zutaten" and ingredient_attribute and searched_ingredient is not None:
             for xyz in updaterezept.zutaten:
-                if not hasattr(xyz,zutatenattribut):
+                if not hasattr(xyz,ingredient_attribute):
                     return False
-                if xyz.name.lower().strip() == gesuchtezutat.lower().strip():
-                    setattr(xyz,zutatenattribut,aenderung)
+                if xyz.name.lower().strip() == searched_ingredient.lower().strip():
+                    setattr(xyz,ingredient_attribute,change)
                     repo.save()
                     return True
             return False

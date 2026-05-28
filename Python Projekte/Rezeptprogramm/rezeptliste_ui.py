@@ -39,7 +39,7 @@ def filter_auswaehlen():
 
 ###### ANZEIGE - MENÜ - FUNKTIONEN ################################################################################################################################################################
 
-def rezepte_ansehen_nach_gang(repo):
+def show_recipe_by_course(repo):
     while True:
         gang_map = {1: "vorspeise",2: "hauptspeise",3:"dessert"}
         gangeingabe = eingabezahl_pruefen("Welchen Gang möchten Sie wählen?\n\n"
@@ -61,7 +61,7 @@ def rezepte_ansehen_nach_gang(repo):
         
         
 
-        rezepte = service.filter_rezepte_nach_gang(repo,gangeingabe)
+        rezepte = service.filter_recipe_by_course(repo,gangeingabe)
         print()
         for i, rezept in enumerate(rezepte, start=1):
             print(f"{i}. {rezept.name}")
@@ -76,7 +76,7 @@ def rezepte_ansehen_nach_gang(repo):
                 if nummer == 0:
                     break
 
-                rezept = service.rezept_nach_index(rezepte, nummer)
+                rezept = service.recipe_by_index(rezepte, nummer)
 
                 if rezept is None:
                     print("Ungültige Nummer.")
@@ -90,7 +90,7 @@ def rezepte_ansehen_nach_gang(repo):
             except ValueError:
                 print("Bitte eine Zahl eingeben.")
 
-def rezepte_ansehen_nach_zutaten(repo):
+def show_recipe_by_ingredient(repo):
     while True:
         zutat = [z.strip() for z in input("Welche Zutat(en) möchten Sie wählen?\nBitte Zutaten mit  \",\"  trennen.\n\n" 
         "0-[Zurück]\n").strip().lower().split(",")]
@@ -98,7 +98,7 @@ def rezepte_ansehen_nach_zutaten(repo):
         if zutat == ["0"]:
             return
         
-        rezepte = service.filter_rezepte_nach_zutaten(repo,zutat)
+        rezepte = service.filter_recipe_by_ingredient(repo,zutat)
 
         
 
@@ -113,7 +113,7 @@ def rezepte_ansehen_nach_zutaten(repo):
 
             try:
                 nummer = eingabezahl_pruefen("Nummer wählen:\n",min_value=0,max_value=len(rezepte))
-                rezept = service.rezept_nach_index(rezepte, nummer)
+                rezept = service.recipe_by_index(rezepte, nummer)
 
                 if rezept is None:
                     print("Ungültige Nummer.")
@@ -129,12 +129,12 @@ def rezepte_ansehen_nach_zutaten(repo):
                 print("Bitte eine Zahl eingeben.")  
                 #hier brauch man kein continue weil die Schleife hier eh endet und dann wieder anfängt
             
-def rezepte_ansehen_nach_Gericht(repo):
+def show_recipe_by_name(repo):
     while True:
         print()
-        for i, rezept in enumerate(service.alle_rezepte(repo), start=1):
+        for i, rezept in enumerate(service.all_recipes(repo), start=1):
             print(f"{i}. {rezept.name}")
-        gerichte = service.filter_rezepte_nach_gericht(repo,"")
+        gerichte = service.filter_recipe_by_name(repo,"")
         nummer = eingabezahl_pruefen("\nWählen sie bitte die Nummer des Gerichtes,\n"
         "geben sie 0 ein um zurück zur Kriterienauswahl zu gelangen:\n",min_value=0,max_value=len(gerichte))
 
@@ -144,7 +144,7 @@ def rezepte_ansehen_nach_Gericht(repo):
         if nummer > len(gerichte):
             print("Falsche Zahl eingegeben!")
             continue
-        rezepte = service.rezept_nach_index(gerichte,nummer)
+        rezepte = service.recipe_by_index(gerichte,nummer)
 
         if not rezepte or 0:
             print("Kein Rezept passt zu diesen Angaben.")
@@ -162,15 +162,15 @@ def rezepte_ansehen(repo):
             return
         
         elif filterwahl == 1:
-            rezepte_ansehen_nach_Gericht(repo)
+            show_recipe_by_name(repo)
             continue
 
         elif filterwahl == 2:
-            rezepte_ansehen_nach_zutaten(repo)
+            show_recipe_by_ingredient(repo)
             continue
         
         elif filterwahl == 3:
-            rezepte_ansehen_nach_gang(repo)
+            show_recipe_by_course(repo)
             continue
         
         
@@ -181,7 +181,7 @@ def rezepte_ansehen(repo):
 
 ####### SPEICHERVERWALTUNGS - MENÜ - FUNKTIONEN ###################################################################################################################################################
 
-def rezept_einfuegen(repo):
+def create_recipe(repo):
     rezeptname = input("Wie heißt das Rezept?\n\n" \
     "0-[Zurück]\n\n"
     "Eingabe:").strip()
@@ -209,24 +209,24 @@ def rezept_einfuegen(repo):
                          "notizen":notizen,
                          "gang":gangeingabe})
 
-    rezept = service.rezept_erstellen(repo,rezept_daten)
+    rezept = service.create_recipe(repo,rezept_daten)
     print(f"{rezept.name} wurde eingefügt!")
     return
 
-def rezept_loeschen(repo):
-        for i, rezept in enumerate(service.alle_rezepte(repo), start=1):
+def delete_recipe(repo):
+        for i, rezept in enumerate(service.all_recipes(repo), start=1):
             print(f"{i}. {rezept.name}")
         
         while True:
             
-            gerichte = service.alle_rezepte(repo)
+            gerichte = service.all_recipes(repo)
             nummer = eingabezahl_pruefen("Welche Nummer soll gelöscht werden?\n"
             "0-[Zurück]:\n",min_value=0,max_value=len(gerichte))                # len(alle_rezepte())würde auch gehen aber so ist es effizienter und logischer wenn
                                                                                 # schon durch gerichte einmal die funktion aufgerufen wurde.
             if nummer == 0:
                 break
             
-            rezept_zum_loeschen = service.rezept_nach_index(gerichte,nummer)
+            rezept_zum_loeschen = service.recipe_by_index(gerichte,nummer)
 
             if rezept_zum_loeschen is None:
                 print("Rezept nicht gefunden.")
@@ -238,7 +238,7 @@ def rezept_loeschen(repo):
             rueckversichern = input(f"Sind sie sicher, dass {rezept_zum_loeschen.name} gelöscht werden soll? Ja/Nein").strip().lower()
 
             if rueckversichern.strip().lower() == "ja":
-                    service.rezept_loeschen(repo,rezept_zum_loeschen.name)
+                    service.delete_recipe(repo,rezept_zum_loeschen.name)
                     print(f"{rezept_zum_loeschen} wurde gelöscht!")
                     return
             
@@ -246,7 +246,7 @@ def rezept_loeschen(repo):
                 print(f"{rezept_zum_loeschen} wird nicht gelöscht.")
                 break
 
-def rezept_updaten(repo):
+def update_recipe(repo):
     rezeptname = input("Welches Gericht soll geupdatet werden?")
     if service.check_recipename(repo,rezeptname):
         rezeptoderzutatattribut = input("Möchten sie etwas im Rezept oder etwas in der Zutatenliste ändern?('zutat' oder 'rezept' eingeben)")
@@ -256,14 +256,14 @@ def rezept_updaten(repo):
                 attributauswahl = input("Was möchten sie ändern?")
                 if service.check_ingredient_attribute(repo,rezeptname,zutatauswahl,attributauswahl):
                     aenderungsauswahl = input("Neuer Eintrag: ")
-                    service.rezept_updaten(repo,rezeptname,aenderungsauswahl,"zutaten",zutatauswahl,attributauswahl)
+                    service.update_recipe(repo,rezeptname,aenderungsauswahl,"zutaten",zutatauswahl,attributauswahl)
                     print("Eintrag wurde geändert.")
 
         elif rezeptoderzutatattribut == "rezept":
             attributauswahl = input("Was möchten sie ändern?")
             if service.check_attribute(repo,rezeptname,attributauswahl):
                 aenderungsauswahl = input("Neuer Eintrag: ")
-                service.rezept_updaten(repo,rezeptname,aenderungsauswahl,attributauswahl)
+                service.update_recipe(repo,rezeptname,aenderungsauswahl,attributauswahl)
         else:
             print("Ungültige Auswahl!")
             return

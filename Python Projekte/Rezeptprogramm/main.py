@@ -45,30 +45,30 @@ def rezepte_nach_index_endpoint(nummer: int):
 
 @app.get("/rezepte/suche/{sucheingabe}")
 def rezepte_finden_endpoint(sucheingabe: str):
-    return service.rezept_finden(repo, sucheingabe)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
+    return service.find_recipe(repo, sucheingabe)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
 
 
 
 @app.get("/rezepte/filter/gerichte/{gericht}")
-def filter_rezepte_nach_gericht_endpoint(gericht: str):
-    return service.filter_rezepte_nach_gericht(repo,gericht)
+def filter_recipe_by_name_endpoint(gericht: str):
+    return service.filter_recipe_by_name(repo,gericht)
 
 @app.get("/rezepte/filter/gang/{gang}")
-def filter_rezepte_nach_gang_endpoint(gang: str):
-    return service.filter_rezepte_nach_gang(repo,gang)
+def filter_recipe_by_course_endpoint(gang: str):
+    return service.filter_recipe_by_course(repo,gang)
 
 @app.get("/rezepte/filter/zutaten")                                 # weil es mehrere inputs gibt brauch man hier kein {bla}, das klappt nur mit 1 input. Siehe API -> die regelt das automatisch
-def filter_rezepte_nach_zutaten_endpoint(zutaten: List[str] = Query()):
-    return service.filter_rezepte_nach_zutaten(repo,zutaten)
+def dilter_recipe_by_ingredients(zutaten: List[str] = Query()):
+    return service.filter_recipe_by_ingredient(repo,zutaten)
 
 #API macht alles, geht so aber SoC konform sollte rezept_erstellen die Buisnesslogik haben und API nur senden.
 @app.post("/rezepte/speicher/erstellen")
 def rezept_erstellen_endpoint(rezept_daten: dict):      #rezept_daten ist die variable für die eingegebenen Daten des neu zu erstellenden Rezeptes 
-    return service.rezept_erstellen(repo,rezept_daten)
+    return service.create_recipe(repo,rezept_daten)
 
 @app.post("/rezepte/speicher/löschen")
 def rezept_löschen_endpoint(rezeptname: str):
-    return service.rezept_loeschen(repo,rezeptname)
+    return service.delete_recipe(repo,rezeptname)
 
 @app.post("/rezepte/speicher/update")
 def rezept_updaten_endpoint(rezept_daten: model.Rezept):
@@ -83,8 +83,9 @@ def cli_starten():
 
         Menueauswahl = input("Möchten sie ein Rezept \n\n"
         "1-[ansehen]\n"
-        "2-[einfügen]\n"
-        "3-[löschen]\n"
+        "2-[ändern]\n"
+        "3-[einfügen]\n"
+        "4-[löschen]\n"
         "0-[exit]\n\n"
         "Eingabe:")
 
@@ -95,16 +96,20 @@ def cli_starten():
             ui.rezepte_ansehen(repo)
 
 
+        if Menueauswahl == "2":
 
-        elif Menueauswahl == "2":
-
-            ui.rezept_einfuegen(repo)
-
+            ui.update_recipe(repo)
 
 
         elif Menueauswahl == "3":
+
+            ui.create_recipe(repo)
+
+
+        elif Menueauswahl == "4":
             
-            ui.rezept_loeschen(repo)
+            ui.delete_recipe(repo)
+
 
         elif Menueauswahl == "0":
             break  
