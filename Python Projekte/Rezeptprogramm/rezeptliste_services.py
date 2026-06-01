@@ -136,15 +136,16 @@ def create_recipe(
     repo.save()
     return new_recipe
 
-def delete_recipe(repo: JsonRezeptRepository, recipename : str) -> None:
+def delete_recipe(repo: JsonRezeptRepository, recipename : str) -> bool:
 
     recipe = find_recipe(repo,recipename)
 
     if recipe is None:
-        return None
+        return False
     
     repo.remove(recipe)
     repo.save()
+    return True
 
 def update_recipe(repo: JsonRezeptRepository, update_datas: schemas.UpdateCreate) -> bool:
     recipe_to_update = find_recipe(repo,update_datas.searched_recipe)

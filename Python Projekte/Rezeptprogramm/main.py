@@ -2,11 +2,13 @@ import rezeptliste_ui as ui
 from pathlib import Path
 import rezeptliste_services as service
 from rezeptliste_repository import JsonRezeptRepository
-from fastapi import FastAPI
+import fastapi
 from typing import List
 from fastapi import Query
 import rezeptliste_model as model
-app = FastAPI()  #erstellt API Anwendung
+import rezeptliste_schemas as schemas
+app = fastapi.FastAPI()  #erstellt API Anwendung
+
 
 
 DATEI = Path(__file__).resolve().parent.parent.parent / "Data"/ "RezeptData"/ "rezepte.json" #link zum speicherort der json Datei
@@ -58,21 +60,32 @@ def filter_recipe_by_course_endpoint(gang: str):
     return service.filter_recipe_by_course(repo,gang)
 
 @app.get("/rezepte/filter/zutaten")                                 # weil es mehrere inputs gibt brauch man hier kein {bla}, das klappt nur mit 1 input. Siehe API -> die regelt das automatisch
-def dilter_recipe_by_ingredients(zutaten: List[str] = Query()):
+def filter_recipe_by_ingredients(zutaten: List[str] = Query()):
     return service.filter_recipe_by_ingredient(repo,zutaten)
 
 #API macht alles, geht so aber SoC konform sollte rezept_erstellen die Buisnesslogik haben und API nur senden.
 @app.post("/rezepte/speicher/erstellen")
-def create_recipe_endpoint(rezept_daten: dict):      #rezept_daten ist die variable für die eingegebenen Daten des neu zu erstellenden Rezeptes 
+def create_recipe_endpoint(rezept_daten: schemas.RecipeCreate):      #rezept_daten ist die variable für die eingegebenen Daten des neu zu erstellenden Rezeptes 
     return service.create_recipe(repo,rezept_daten)
 
-@app.post("/rezepte/speicher/löschen")
+@app.delete("/rezepte/speicher/löschen")
 def delete_recipe_endpoint(rezeptname: str):
-    return service.delete_recipe(repo,rezeptname)
+    success = service.delete_recipe(repo,rezeptname)
 
-@app.post("/rezepte/speicher/update")
-def update_recipe_endpoint(rezept_daten: model.Rezept):
-    pass
+    if not success:
+        raise fastapi.HTTPException(status_code=404, detail="Löschung ist fehlgeschlagen!")
+    
+    return {"Info":"Rezept wurde gelöscht!"}
+
+@app.patch("/rezepte/speicher/update")
+def update_recipe_endpoint(rezept_daten: schemas.UpdateCreate ):
+    success = service.update_recipe(repo,rezept_daten)
+
+    if not success:
+        raise fastapi.HTTPException(status_code=404, detail="Rezept, Zutat oder Attribut nicht gefunden")
+
+    
+    return {"Info":"Update erfolgreich!"}
     
 
 

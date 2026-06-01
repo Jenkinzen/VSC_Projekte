@@ -7,7 +7,6 @@ class IngredientCreate(BaseModel):
     menge: str | None = None
     einheit: str | None = None
     
-
 class RecipeCreate(BaseModel):
     name: str
     zutaten: list[IngredientCreate]
