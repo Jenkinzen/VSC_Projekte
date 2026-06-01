@@ -34,17 +34,17 @@ def root():
     return {"message": "Moin Moin meine aktiven Freunde"}
 
 @app.get("/rezepte")
-def alle_rezepte_endpoint():
-    return repo.alle()
+def find_all_recipes():
+    return repo.all()
 
 
 
 @app.get("/rezepte/{nummer}")
-def rezepte_nach_index_endpoint(nummer: int):
-    return service.rezept_nach_index(repo.alle(), nummer)           # repo.alle() -> yo hier ich übergeb dir das komplette repo! (macht sinn bei der funktion die ALLES im repo anzeigen soll)
+def recipe_by_index_endpoint(nummer: int):
+    return service.recipe_by_index(repo.all(), nummer)           # repo.alle() -> yo hier ich übergeb dir das komplette repo! (macht sinn bei der funktion die ALLES im repo anzeigen soll)
 
 @app.get("/rezepte/suche/{sucheingabe}")
-def rezepte_finden_endpoint(sucheingabe: str):
+def find_recipe_endpoint(sucheingabe: str):
     return service.find_recipe(repo, sucheingabe)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
 
 
@@ -63,15 +63,15 @@ def dilter_recipe_by_ingredients(zutaten: List[str] = Query()):
 
 #API macht alles, geht so aber SoC konform sollte rezept_erstellen die Buisnesslogik haben und API nur senden.
 @app.post("/rezepte/speicher/erstellen")
-def rezept_erstellen_endpoint(rezept_daten: dict):      #rezept_daten ist die variable für die eingegebenen Daten des neu zu erstellenden Rezeptes 
+def create_recipe_endpoint(rezept_daten: dict):      #rezept_daten ist die variable für die eingegebenen Daten des neu zu erstellenden Rezeptes 
     return service.create_recipe(repo,rezept_daten)
 
 @app.post("/rezepte/speicher/löschen")
-def rezept_löschen_endpoint(rezeptname: str):
+def delete_recipe_endpoint(rezeptname: str):
     return service.delete_recipe(repo,rezeptname)
 
 @app.post("/rezepte/speicher/update")
-def rezept_updaten_endpoint(rezept_daten: model.Rezept):
+def update_recipe_endpoint(rezept_daten: model.Rezept):
     pass
     
 

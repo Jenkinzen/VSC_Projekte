@@ -247,23 +247,23 @@ def delete_recipe(repo):
                 break
 
 def update_recipe(repo):
-    rezeptname = input("Welches Gericht soll geupdatet werden?")
-    if service.check_recipename(repo,rezeptname):
-        rezeptoderzutatattribut = input("Möchten sie etwas im Rezept oder etwas in der Zutatenliste ändern?('zutat' oder 'rezept' eingeben)")
-        if rezeptoderzutatattribut == "zutat":
-            zutatauswahl = input("Welche Zutat möchten sie ändern?")
-            if service.check_ingredient_in_recipe(repo,rezeptname,zutatauswahl):
-                attributauswahl = input("Was möchten sie ändern?")
-                if service.check_ingredient_attribute(repo,rezeptname,zutatauswahl,attributauswahl):
-                    aenderungsauswahl = input("Neuer Eintrag: ")
-                    service.update_recipe(repo,rezeptname,aenderungsauswahl,"zutaten",zutatauswahl,attributauswahl)
+    recipename = input("Welches Gericht soll geupdatet werden?")
+    if service.check_recipename(repo,recipename):
+        recipeoringredientattribute = input("Möchten sie etwas im Rezept oder etwas in der Zutatenliste ändern?('zutat' oder 'rezept' eingeben)")
+        if recipeoringredientattribute == "zutat":
+            ingredientname = input("Welche Zutat möchten sie ändern?")
+            if service.check_ingredient_in_recipe(repo,recipename,ingredientname):
+                attributename = input("Was möchten sie ändern?")
+                if service.check_ingredient_attribute(repo,recipename,ingredientname,attributename):
+                    newentry = input("Neuer Eintrag: ")
+                    service.update_recipe(repo,recipename,newentry,"zutaten",ingredientname,attributename)
                     print("Eintrag wurde geändert.")
 
-        elif rezeptoderzutatattribut == "rezept":
-            attributauswahl = input("Was möchten sie ändern?")
-            if service.check_attribute(repo,rezeptname,attributauswahl):
-                aenderungsauswahl = input("Neuer Eintrag: ")
-                service.update_recipe(repo,rezeptname,aenderungsauswahl,attributauswahl)
+        elif recipeoringredientattribute == "rezept":
+            attributename = input("Was möchten sie ändern?")
+            if service.check_attribute(repo,recipename,attributename):
+                newentry = input("Neuer Eintrag: ")
+                service.update_recipe(repo,recipename,newentry,attributename)
         else:
             print("Ungültige Auswahl!")
             return
