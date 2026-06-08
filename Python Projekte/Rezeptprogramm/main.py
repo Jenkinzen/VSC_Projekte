@@ -39,23 +39,28 @@ def root():
 def find_all_recipes():
     return repo.all()
 
-
+@app.get("/rezepte/suchen")
+def search_recipes(
+    name: str | None = None,
+    gang: str | None = None,
+    zutaten: List[str] = Query(default=[])):
+    return service.dynamic_search_recipes(repo,name,gang,zutaten)
 
 @app.get("/rezepte/{nummer}")
 def recipe_by_index_endpoint(nummer: int):
     return service.recipe_by_index(repo.all(), nummer)           # repo.alle() -> yo hier ich übergeb dir das komplette repo! (macht sinn bei der funktion die ALLES im repo anzeigen soll)
 
-@app.get("/rezepte/suche/{sucheingabe}")
+@app.get("/rezepte/exakt/{sucheingabe}")
 def find_recipe_endpoint(sucheingabe: str):
-    return service.find_recipe(repo, sucheingabe)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
+    return service.find_exact_recipe(repo, sucheingabe)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
 
+#DYNAMISCHEN SUCH SERVICE CODEN (Name- + Gang- + Zutat(en)angaben werden als suchparameter genutzt)
 
-
-@app.get("/rezepte/filter/gerichte/{gericht}")
+@app.get("/rezepte/suchen/gericht/{gericht}")
 def filter_recipe_by_name_endpoint(gericht: str):
     return service.filter_recipe_by_name(repo,gericht)
 
-@app.get("/rezepte/filter/gang/{gang}")
+@app.get("/rezepte/suchen/gang/{gang}")
 def filter_recipe_by_course_endpoint(gang: str):
     return service.filter_recipe_by_course(repo,gang)
 
@@ -63,12 +68,11 @@ def filter_recipe_by_course_endpoint(gang: str):
 def filter_recipe_by_ingredients(zutaten: List[str] = Query()):
     return service.filter_recipe_by_ingredient(repo,zutaten)
 
-#API macht alles, geht so aber SoC konform sollte rezept_erstellen die Buisnesslogik haben und API nur senden.
 @app.post("/rezepte/speicher/erstellen")
 def create_recipe_endpoint(rezept_daten: schemas.RecipeCreate):      #rezept_daten ist die variable für die eingegebenen Daten des neu zu erstellenden Rezeptes 
     return service.create_recipe(repo,rezept_daten)
 
-@app.delete("/rezepte/speicher/löschen")
+@app.delete("/rezepte/speicher/löschen/{rezeptname}")
 def delete_recipe_endpoint(rezeptname: str):
     success = service.delete_recipe(repo,rezeptname)
 

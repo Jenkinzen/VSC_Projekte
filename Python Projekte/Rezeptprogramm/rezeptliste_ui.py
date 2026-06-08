@@ -1,7 +1,7 @@
 from pathlib import Path
 import rezeptliste_services as service
 from rezeptliste_repository import JsonRezeptRepository
-
+import rezeptliste_schemas as schemas
 
 
 
@@ -202,14 +202,31 @@ def create_recipe(repo):
             print("Ungültige Auswahl! Bitte erneut eingeben.") 
 
     
+    zutaten = []
+    for zutat in zutaten_strings:
+        teile = zutat.split()
 
-    rezept_daten = ({"name":rezeptname,
-                         "zutaten":zutaten_strings,
-                         "zubereitung":zubereitung,
-                         "notizen":notizen,
-                         "gang":gangeingabe})
+        name = None
+        menge= None
+        einheit = None 
 
-    rezept = service.create_recipe(repo,rezept_daten)
+        if len(teile) >=1:
+            name = teile[0]
+        
+        if len(teile) >=2:
+            einheit = teile [1]
+
+        if len(teile) > 3: 
+            name = " ".join(teile[:-2])           #alles bis auf die beiden letzten (" ".join macht die liste der zutatennamenwörter wieder zu einem string)
+            menge = teile[-2]                     # das vorletzte
+            einheit = teile [-1]                  # das letzte
+
+        if name is not None:
+            zutaten.append(schemas.IngredientCreate(zutatenname=name,menge=menge,einheit=einheit))
+
+    recipe_datas= schemas.RecipeCreate(name=rezeptname,zutaten=zutaten,zubereitung=zubereitung,gang=gangeingabe,notizen=notizen)
+
+    rezept = service.create_recipe(repo,recipe_datas)
     print(f"{rezept.name} wurde eingefügt!")
     return
 
@@ -256,14 +273,16 @@ def update_recipe(repo):
                 attributename = input("Was möchten sie ändern?")
                 if service.check_ingredient_attribute(repo,recipename,ingredientname,attributename):
                     newentry = input("Neuer Eintrag: ")
-                    service.update_recipe(repo,recipename,newentry,"zutaten",ingredientname,attributename)
+                    update_datas = schemas.UpdateCreate(searched_recipe=recipename,change=newentry,recipeattribute="zutaten",searched_ingredient=ingredientname,ingredient_attribute=attributename)
+                    service.update_recipe(repo,update_datas)
                     print("Eintrag wurde geändert.")
 
         elif recipeoringredientattribute == "rezept":
             attributename = input("Was möchten sie ändern?")
             if service.check_attribute(repo,recipename,attributename):
                 newentry = input("Neuer Eintrag: ")
-                service.update_recipe(repo,recipename,newentry,attributename)
+                update_datas = schemas.UpdateCreate(searched_recipe=recipename,change=newentry,recipeattribute="zutaten",searched_ingredient=None,ingredient_attribute=attributename)
+                service.update_recipe(repo,update_datas)
         else:
             print("Ungültige Auswahl!")
             return

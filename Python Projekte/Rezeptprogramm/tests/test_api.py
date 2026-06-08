@@ -4,7 +4,7 @@ from main import app
 client = TestClient(app)
 
 # python -m pytest tests/test_api.py -v    COMMANDBEFEHL FÜR API TEST
-
+# [python ruft -m(odul) pytest auf | -> tests/test_api.py Pfad dieser Datei | -v = zeigt ob die tests erfolgreich waren, mit -s dahinter zeigt es auch noch die prints der responses]
 def test_find_all_recipes():
     response = client.get("/rezepte")
 
@@ -34,7 +34,7 @@ def test_filter_recipe_by_name_endpoint():
 
 
 def test_delete_recipe_endpoint():
-    response = client.delete("/rezepte/speicher/löschen?rezeptname=Schlammsuppe")
+    response = client.delete("/rezepte/speicher/löschen/Schlammsuppe")
 
     assert response.status_code == 404
     print(response.json())

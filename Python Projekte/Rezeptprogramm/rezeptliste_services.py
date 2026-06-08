@@ -4,7 +4,17 @@ from typing import List, Optional
 from rezeptliste_repository import JsonRezeptRepository
 import rezeptliste_schemas as schemas
 
+#LIST COMP CHEAT SHEET
 
+
+
+#result = []                    # wird unten durch [] in der die LC steht ersetzt
+#for r in repo.all():           # steht unten einfach hintereinander
+#   if r.gang == "Dessert":     # steht unten einfach hintereinander
+#       result.append(r.name)   # wird unten durch r.name am Anfang ersetzt
+
+#[WAS for WERT in QUELLE if BEDINGUNG]
+#[r.name for r in repo.all() if r.gang == "Dessert"]
 
 ######## BASISZUGRIFF - LESEN #################################################################################################################################
 
@@ -21,7 +31,7 @@ def recipe_by_index(recipe: List[model.Rezept], index: int) -> Optional[model.Re
         return recipe[index - 1]
     return None
 
-def find_recipe(repo: JsonRezeptRepository, recipename: str) -> Optional[model.Rezept]:
+def find_exact_recipe(repo: JsonRezeptRepository, recipename: str) -> Optional[model.Rezept]:
 
     return repo.find_recipe_by_input(recipename)
 
@@ -33,7 +43,7 @@ def check_recipename(repo: JsonRezeptRepository,recipename) -> bool:
     return False
 
 def check_attribute(repo: JsonRezeptRepository,rezeptname,attributname) -> bool:
-    if hasattr(find_recipe(repo,rezeptname),attributname) is not None:
+    if hasattr(find_exact_recipe(repo,rezeptname),attributname) is not None:
         return True
     return False
 
@@ -90,33 +100,26 @@ def filter_recipe_by_ingredient(repo: JsonRezeptRepository, ingredientinput: Lis
         )
     ]
 
+def dynamic_search_recipes(repo: JsonRezeptRepository, name: str | None = None ,gang:str | None = None ,zutaten: List[str] | None = None) -> List[model.Rezept]:
+
+    recipes = repo.all()                #macht das recipes eine Kopie der Liste aller Rezepte ist , wenn jetzt bei "name" schon Sushibowl als Treffer übernommen wird,
+                                        #ist Sushibowl quasi aus der recipes Liste raus und kann bei der "gang" Suche nicht nochmal übernommen werden.
+
+    if name:
+        recipes =[recipe for recipe in recipes if name in recipe.name.strip().lower()]
+            
+    if gang:
+        recipes =[recipe for recipe in recipes if gang in recipe.gang.strip().lower()]
+
+    if zutaten:
+        recipes =[recipe for recipe in recipes if all(any(zutat in einzelne_zutat.name.strip().lower() for einzelne_zutat in recipe.zutaten)
+            for zutat in zutaten)]
+
+    return recipes
+                    
+
 ######## ÄNDERUNGEN ################################################################################################################################################
 
-
-    """In die Leere Zutatenliste kommen nachher die Objekte aus der Funktion.
-        zs variable für Zutat als Text ( wie das 1. x in x for x in Gerichte )
-        teile = zs.split() -> die Sachen werden durch leerzeichen gesplittet(also Name,menge,einheit)
-        if not teile -> überspringen von allem was sonst zum error führen würde, bzw durch so einen Input
-        wird man per continue dann wieder an den Schleifenanfang gebracht für erneuten input.
-
-        zutatenname Zeile -> teile (also die Teile der Zutat: Name, menge, einheit)
-          [:-2] heißt NICHT geteilt durch -2 sondern : sagt alles und -2 bis auf die letzten beiden! 
-          damit wird jeder Input bis auf die letzten beiden zum "teil" Name hinzugefügt.
-          wenns bspw [:-1] wär dann würde die Menge noch mit beim Namen stehen.
-          und durch .join davor wird die liste von wörtern zu einem String mit Leerzeichen.
-        if len(teile) > 2 -> also mach .join(teile[:-2]) insofern mehr als 2 wörter eingegeben werde.
-        else teile[0] -> wenn weniger als 2 wörter eingegeben werden, nimm halt das 1 Wort oder die Leerstelle.
-        
-        menge -> teile[-2] if len(teile) > 1  --> also vorletztes Teil
-            wenn es mehr als 1 teil gibt
-            else None -> sonst gibts halt keine Menge. 
-            (Unfassbar smart, weil es "Salz , Prise" gibt also angaben ohne Menge,
-            aber es gibt keine Angaben ohne Einheit aber mit Menge, weil was will jemand mit
-            der aussage " du brauchst 150 Salz")
-            
-        einheit -> teile[-1] also ist das letzte teil
-                if len(teile) >= 2 -> insofern es genau oder mehr als 2 teile gibt.
-    """
     
 def create_recipe(
     repo: JsonRezeptRepository,
@@ -138,7 +141,7 @@ def create_recipe(
 
 def delete_recipe(repo: JsonRezeptRepository, recipename : str) -> bool:
 
-    recipe = find_recipe(repo,recipename)
+    recipe = find_exact_recipe(repo,recipename)
 
     if recipe is None:
         return False
@@ -148,7 +151,7 @@ def delete_recipe(repo: JsonRezeptRepository, recipename : str) -> bool:
     return True
 
 def update_recipe(repo: JsonRezeptRepository, update_datas: schemas.UpdateCreate) -> bool:
-    recipe_to_update = find_recipe(repo,update_datas.searched_recipe)
+    recipe_to_update = find_exact_recipe(repo,update_datas.searched_recipe)
     if recipe_to_update is None:
         return  False
     else:
