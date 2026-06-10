@@ -33,12 +33,39 @@ def recipe_by_index(recipe: List[model.Rezept], index: int) -> Optional[model.Re
 
 def find_exact_recipe(repo: JsonRezeptRepository, recipename: str) -> Optional[model.Rezept]:
 
-    return repo.find_recipe_by_input(recipename)
+    recipes = repo.all()
 
+    for xyz in recipes:
+        if xyz.name.lower().strip() == recipename.lower().strip():
+            return xyz
+        else:
+            return None
+        
+def find_ingredient_in_all_recipes(repo: JsonRezeptRepository, ingredientname: str) -> Optional[model.Zutaten]:
+        
+        recipes = repo.all()
+
+        for recipe in recipes:
+            for zutat in recipe.zutaten:
+                if ingredientname.strip().lower() == zutat.name.strip().lower():
+                    return zutat
+        return None
+
+def find_ingredient_in_one_recipe(repo: JsonRezeptRepository, recipename:str,ingredientname:str) -> Optional[model.Zutaten]:
+        
+        recipes = repo.all()
+
+        for recipe in recipes:
+            if recipename.lower().strip() == recipe.name.strip().lower():
+                for zutat in recipe.zutaten:
+                    if ingredientname.strip().lower() == zutat.name.lower().strip():
+                        return zutat
+                return None    
+        return None
 
 ######## VALIDIERUNG ##############################################################################################################################################
 def check_recipename(repo: JsonRezeptRepository,recipename) -> bool:
-    if repo.find_recipe_by_input(recipename):
+    if find_exact_recipe(repo,recipename):
         return True
     return False
 
@@ -48,12 +75,12 @@ def check_attribute(repo: JsonRezeptRepository,rezeptname,attributname) -> bool:
     return False
 
 def check_ingredient_attribute(repo: JsonRezeptRepository,recipename,ingredientname,attributename) -> bool:
-    if hasattr(repo.find_ingredient_in_one_recipe(recipename,ingredientname),attributename) is not None:
+    if hasattr(find_ingredient_in_one_recipe(repo,recipename,ingredientname),attributename) is not None:
         return True
     return False
 
 def check_ingredient_in_recipe(repo: JsonRezeptRepository,recipename,ingredientname) -> bool:
-    if repo.find_ingredient_in_one_recipe(recipename,ingredientname)is not None:
+    if find_ingredient_in_one_recipe(repo,recipename,ingredientname)is not None:
         return True
     return False
 
@@ -72,34 +99,6 @@ def validate_course(recipes, courseinput):
 
 ######## FILTER ####################################################################################################################################################
 
-def filter_recipe_by_name(repo: JsonRezeptRepository, recipe: str) -> List[model.Rezept]:
-    """wollte eigentlich mit "any" arbeiten, aber teiltreffer ("Bro" eingabe zeigt "Brokkoli" an)
-    werden auch durch "in" ermöglicht. any macht kein sinn weil gerichte.Name keine Liste
-     sondern ein String ist, bei Zutaten machte es Sinn weil Zutaten eine Liste ist.(any = irgendeins aus (der liste)/ in = irgendetwas im (string))
-     """
-    recipe = recipe.strip().lower()
-    return [r for r in repo.all() if recipe in r.name.strip().lower()]
-
-def filter_recipe_by_course(repo: JsonRezeptRepository, courseinput: str) -> List[model.Rezept]:
-    """Siehe filter_rezepte_nach_zutaten, selbe sache nur ohne aus einer liste(gerichte)
-   eine weitere liste(wie unten die zutatenliste) aufrufen zu müssen."""
-    course = courseinput.strip().lower()
-    return [r for r in repo.all() if r.gang.strip().lower() == course]
-
-def filter_recipe_by_ingredient(repo: JsonRezeptRepository, ingredientinput: List[str]) -> List[model.Rezept]:
-    """ rezept for rezept in storage.Gerichte > geh jedes rezept durch was gespeichert wurde.(s.Gerichte = rezeptsammlung / rezept for rezept = jedes Rezept einzeln durchgehen)
-    any(zutat in einzelne_zutat = gibt es die gesuchten Zutaten im Rezept? ///// for einzelne_zutat in rezept.Zutaten) = guck jede Zutat des Rezepts an.
-    all(any(bla)for zutat in zutaten) =  sind ALLE gesuchten Zutaten in diesem Rezept?""" 
-    zutatenwahl = [z.strip().lower() for z in ingredientinput if z.strip()]
-    return [
-        rezept
-        for rezept in repo.all()
-        if all(
-            any(zutat in einzelne_zutat.name.strip().lower() for einzelne_zutat in rezept.zutaten)
-            for zutat in zutatenwahl
-        )
-    ]
-
 def dynamic_search_recipes(repo: JsonRezeptRepository, name: str | None = None ,gang:str | None = None ,zutaten: List[str] | None = None) -> List[model.Rezept]:
 
     recipes = repo.all()                #macht das recipes eine Kopie der Liste aller Rezepte ist , wenn jetzt bei "name" schon Sushibowl als Treffer übernommen wird,
@@ -116,6 +115,42 @@ def dynamic_search_recipes(repo: JsonRezeptRepository, name: str | None = None ,
             for zutat in zutaten)]
 
     return recipes
+
+#all hits service funktion noch auf die anderen layer übertragen und im swagger testen
+
+def all_hits_recipes(repo: JsonRezeptRepository, name: str | None = None , gang:str | None = None , zutaten: List[str] | None=None) -> List[model.Rezept]:
+
+    recipes = repo.all()
+
+    hit_list= []
+
+    for xyz in recipes:
+        if name == None:
+            continue
+        else:
+            if name in xyz.name.strip().lower():
+                hit_list.append(xyz)
+
+    for xyz in recipes:
+        if gang == None:
+            continue
+        else:
+            if gang in xyz.gang.strip().lower()and xyz not in hit_list:
+                hit_list.append(xyz)
+            
+
+    for xyz in recipes:                                 # für variable in allen rezepten
+        if zutaten == None:
+            continue
+        else:
+                for gesuchte_zutat in xyz.zutaten:      # für variable in den zutaten aller rezepte    
+                    for aktuelle_zutat in zutaten:      # für variable in den angegebenen zutaten ( da man ja mehrere angeben kann wird hierdurch durch jede eingegebene gesuchte zutat iteriert und einzelne_zutat ist dann jeweils eine zutat der eingegebenen zutatenliste)
+                        if aktuelle_zutat in gesuchte_zutat.name.strip().lower() and xyz not in hit_list:  # wenn die aktuelle zutat aus zutaten teiltreffer mit zutatennamen in irgend nem rezept hat
+                            hit_list.append(xyz)        #ab inne liste rinne
+                        
+    
+    return hit_list
+
                     
 
 ######## ÄNDERUNGEN ################################################################################################################################################

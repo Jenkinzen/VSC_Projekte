@@ -54,20 +54,6 @@ def recipe_by_index_endpoint(nummer: int):
 def find_recipe_endpoint(sucheingabe: str):
     return service.find_exact_recipe(repo, sucheingabe)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
 
-#DYNAMISCHEN SUCH SERVICE CODEN (Name- + Gang- + Zutat(en)angaben werden als suchparameter genutzt)
-
-@app.get("/rezepte/suchen/gericht/{gericht}")
-def filter_recipe_by_name_endpoint(gericht: str):
-    return service.filter_recipe_by_name(repo,gericht)
-
-@app.get("/rezepte/suchen/gang/{gang}")
-def filter_recipe_by_course_endpoint(gang: str):
-    return service.filter_recipe_by_course(repo,gang)
-
-@app.get("/rezepte/filter/zutaten")                                 # weil es mehrere inputs gibt brauch man hier kein {bla}, das klappt nur mit 1 input. Siehe API -> die regelt das automatisch
-def filter_recipe_by_ingredients(zutaten: List[str] = Query()):
-    return service.filter_recipe_by_ingredient(repo,zutaten)
-
 @app.post("/rezepte/speicher/erstellen")
 def create_recipe_endpoint(rezept_daten: schemas.RecipeCreate):      #rezept_daten ist die variable für die eingegebenen Daten des neu zu erstellenden Rezeptes 
     return service.create_recipe(repo,rezept_daten)
