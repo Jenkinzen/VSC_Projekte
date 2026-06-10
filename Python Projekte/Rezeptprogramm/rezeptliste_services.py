@@ -22,15 +22,6 @@ import rezeptliste_schemas as schemas
 def all_recipes(repo: JsonRezeptRepository) -> List[model.Rezept]:
     return repo.all()
 
-def recipe_by_index(recipe: List[model.Rezept], index: int) -> Optional[model.Rezept]:
-    """index = auswahl der Gerichtnummer im UI.
-    wenn die auswahl größer gleich 1 ist und kleiner als die
-    gesamtanzahl an rezepten (len(recipe) nummeriert die einzelnen Objekte in der Liste durch
-    ,hier halt die Rezepte in der Liste Gerichte)"""
-    if 1 <= index <= len(recipe):
-        return recipe[index - 1]
-    return None
-
 def find_exact_recipe(repo: JsonRezeptRepository, recipename: str) -> Optional[model.Rezept]:
 
     recipes = repo.all()
@@ -99,7 +90,7 @@ def validate_course(recipes, courseinput):
 
 ######## FILTER ####################################################################################################################################################
 
-def dynamic_search_recipes(repo: JsonRezeptRepository, name: str | None = None ,gang:str | None = None ,zutaten: List[str] | None = None) -> List[model.Rezept]:
+def match_all_search_recipes(repo: JsonRezeptRepository, name: str | None = None ,gang:str | None = None ,zutaten: List[str] | None = None) -> List[model.Rezept]:
 
     recipes = repo.all()                #macht das recipes eine Kopie der Liste aller Rezepte ist , wenn jetzt bei "name" schon Sushibowl als Treffer übernommen wird,
                                         #ist Sushibowl quasi aus der recipes Liste raus und kann bei der "gang" Suche nicht nochmal übernommen werden.
@@ -116,9 +107,7 @@ def dynamic_search_recipes(repo: JsonRezeptRepository, name: str | None = None ,
 
     return recipes
 
-#all hits service funktion noch auf die anderen layer übertragen und im swagger testen
-
-def all_hits_recipes(repo: JsonRezeptRepository, name: str | None = None , gang:str | None = None , zutaten: List[str] | None=None) -> List[model.Rezept]:
+def match_any_search_recipes(repo: JsonRezeptRepository, name: str | None = None , gang:str | None = None , zutaten: List[str] | None=None) -> List[model.Rezept]:
 
     recipes = repo.all()
 

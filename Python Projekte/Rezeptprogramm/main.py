@@ -43,12 +43,15 @@ def find_all_recipes():
 def search_recipes(
     name: str | None = None,
     gang: str | None = None,
+    match: str = Query(default="any"),
     zutaten: List[str] = Query(default=[])):
-    return service.dynamic_search_recipes(repo,name,gang,zutaten)
 
-@app.get("/rezepte/{nummer}")
-def recipe_by_index_endpoint(nummer: int):
-    return service.recipe_by_index(repo.all(), nummer)           # repo.alle() -> yo hier ich übergeb dir das komplette repo! (macht sinn bei der funktion die ALLES im repo anzeigen soll)
+    if match == "all":
+        return service.match_all_search_recipes(repo,name,gang,zutaten)
+        
+    if match == "any":
+        return service.match_any_search_recipes(repo,name,gang,zutaten)
+
 
 @app.get("/rezepte/exakt/{sucheingabe}")
 def find_recipe_endpoint(sucheingabe: str):

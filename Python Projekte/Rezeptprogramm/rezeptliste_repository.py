@@ -31,7 +31,6 @@ class JsonRezeptRepository:
     def remove(self, recipe: model.Rezept) -> None:
         self._gerichte.remove(recipe)
 
-    
     # ---- Persistenz ----
     def load(self) -> None:
         if not self._datei.exists():
