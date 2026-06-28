@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
+import sqlite3 as sql
 from pathlib import Path
 from typing import List, Optional
 
 import rezeptliste_model as model
-import rezeptliste_services as service
 #also... das Repo ist NICHT der Speicher der dictionaries etc. 
 #Das Repo ist der aktive Objektspeicher während der Programmausführung, also hat z.b. json dictionary und die umwandlung dessen Inhalt mit Objekten noch nichts
 #mit dem Repo zu tun sondern nur mit der json Datei und Python, erst wenn Python das dict in Objekte umwandelt und DANN im Repo speichert 
@@ -88,3 +88,110 @@ class JsonRezeptRepository:
 
     def __len__(self) -> int:
         return len(self._gerichte)
+
+
+
+
+
+
+
+
+
+
+class SqlRezeptRepository:
+    def __init__(self,db_datei: Path):
+        self._db_datei = db_datei
+        self._connection = sql.connect(self._db_datei)     #hier kommt kein DB pfad in die klammer, der wird in rezeptliste_api definiert (SoC + universales repo für verschiedene DB's)
+        self._connection.row_factory = sql.Row              # dafür damit man später spalten als name lesen kann
+        self._connection.execute("PRAGMA foreign_keys = ON")
+        self.create_tables() 
+
+    def create_tables(self):
+        self._connection.execute("""
+        CREATE TABLE IF NOT EXISTS recipes (
+                                 id INTEGER PRIMARY KEY AUTOINCREMENT,          
+                                 name TEXT NOT NULL UNIQUE,
+                                 zubereitung TEXT NOT NULL,
+                                 gang TEXT NOT NULL,
+                                 notizen TEXT)
+                                 """)
+                                                                    # INTEGER PRIMARY KEY AUTOINCREMENT -> jedes Gericht bekommt automatisch eine eigene ID zugewiesen, jede Zeile kriegt
+                                                                    # eine eigene Zahl zugewiesen / UNIQUE -> darf nur 1 mal so vorkommen ( damit man nicht mehrere gleiche Rezeptnamen in die SQL packen kann)
+        self._connection.execute("""
+                                 CREATE TABLE IF NOT EXISTS recipe_ingredients(
+                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                 recipe_id INTEGER NOT NULL,
+                                 zutatenname TEXT NOT NULL,
+                                 menge TEXT,
+                                 einheit TEXT,
+                                 FOREIGN KEY (recipe_id) REFERENCES recipes(id))
+                                 """)
+        
+        self._connection.commit()
+
+    def add(self,rezept: model.Rezept):
+        cursor = self._connection.execute("""
+                                            INSERT INTO recipes (name,zubereitung,gang,notizen)
+                                            VALUES(?,?,?,?)""",(
+                                            rezept.name,
+                                            rezept.zubereitung,
+                                            rezept.gang,
+                                            rezept.notizen))
+        
+        recipe_id = cursor.lastrowid
+
+        for zutat in rezept.zutaten:
+            self._connection.execute("""
+                                     INSERT INTO  recipe_ingredients (recipe_id, zutatenname, menge, einheit)
+                VALUES (?,?,?,?)
+                """,
+                (
+                    recipe_id,
+                    zutat.name,
+                    zutat.menge,
+                    zutat.einheit
+                )
+            )
+            
+        self._connection.commit()
+        return rezept
+
+    def all(self) -> list[model.Rezept]:
+        recipe_rows = self._connection.execute(
+            """SELECT id, name, zubereitung, gang, notizen
+            FROM recipes
+            """
+        ).fetchall() # hol mir die oben SELECTeten Daten alle ( gibt auch fetchone (erste Datei[mit Datei ist eine Zeile gemeint also ein Rezept mit allen attributen]))
+
+        rezepte = []
+
+        for recipe_row in recipe_rows:
+            ingredient_rows = self._connection.execute(
+                """
+                SELECT zutatenname, menge, einheit
+                FROM recipe_ingredients
+                WHERE recipe_id = ?
+                """,(recipe_row["id"],)
+            ).fetchall()
+
+            zutaten = [model.Zutaten(
+                name=row["zutatenname"],
+                menge= row["menge"],
+                einheit=row["einheit"]
+            ) for row in ingredient_rows
+            ]
+
+            rezept = model.Rezept(
+                name=recipe_row["name"],
+                zutaten=zutaten,
+                zubereitung=recipe_row["zubereitung"],
+                gang=recipe_row["gang"],
+                notizen=recipe_row["notizen"]
+            )
+
+            rezepte.append(rezept)
+
+        return rezepte
+
+
+ 

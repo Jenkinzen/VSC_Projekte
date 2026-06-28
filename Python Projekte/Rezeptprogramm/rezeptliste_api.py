@@ -1,7 +1,8 @@
 import rezeptliste_ui as ui
 from pathlib import Path
 import rezeptliste_services as service
-from rezeptliste_repository import JsonRezeptRepository
+from rezeptliste_repository import JsonRezeptRepository 
+from rezeptliste_repository import SqlRezeptRepository
 import fastapi
 from typing import List
 import rezeptliste_model as model
@@ -9,11 +10,31 @@ import rezeptliste_schemas as schemas
 app = fastapi.FastAPI()  #erstellt API Anwendung
 
 
+BASE_DIR = Path(__file__).resolve().parent
 
-DATEI = Path(__file__).resolve().parent.parent.parent / "Data"/ "RezeptData"/ "rezepte.json" #link zum speicherort der json Datei
+DB_DATEI = BASE_DIR / "databases" / "rezepte.db"
 
-repo = JsonRezeptRepository(DATEI)
-repo.load()
+DATEI = BASE_DIR / "databases" / "rezepte.json" #link zum speicherort der json Datei
+
+
+
+
+
+REPOSITORY_TYP = "sql"              # hier zwischen json und sql repo wechseln
+
+
+
+if REPOSITORY_TYP == "json":
+    repo = JsonRezeptRepository(DATEI)   
+    repo.load()
+
+elif REPOSITORY_TYP =="sql":
+    repo_sql = SqlRezeptRepository(DB_DATEI)
+
+else:
+    raise ValueError("Unbekannter Repository-Typ")
+
+
 
 """momentaner Ablauf: JSON Datei auf der Festplatte hat die Rezepte als JSON-Format(sieht exakt aus wie ein dict, ist aber als JSON einfach nur ein text Datentyp der besonders angeordnet wird)
  Durch json.load() wandelt Python es in ein Python dict um... ab dem Punkt nennt man es dann ein dict, da es nun von python zum datentyp dict umgewandelt wurde
@@ -109,49 +130,3 @@ def update_recipe_endpoint(rezept_daten: schemas.UpdateCreate ):
     
 
 
-def cli_starten():
-    neustart = True
-
-    while neustart:
-
-        Menueauswahl = input("Möchten sie ein Rezept \n\n"
-        "1-[ansehen]\n"
-        "2-[ändern]\n"
-        "3-[einfügen]\n"
-        "4-[löschen]\n"
-        "0-[exit]\n\n"
-        "Eingabe:")
-
-
-
-        if Menueauswahl == "1":
-
-            ui.rezepte_ansehen(repo)
-
-
-        elif Menueauswahl == "2":
-
-            ui.update_recipe(repo)
-
-
-        elif Menueauswahl == "3":
-
-            ui.create_recipe(repo)
-
-
-        elif Menueauswahl == "4":
-            
-            ui.delete_recipe(repo)
-
-
-        elif Menueauswahl == "0":
-            break  
-
-
-        else:
-            print("Ungültige Auswahl!")
-            continue
-
-if __name__ == "__main__":
-    cli_starten()
-        

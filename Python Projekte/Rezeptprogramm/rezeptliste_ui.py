@@ -61,7 +61,7 @@ def show_recipe_by_course(repo):
         
         
 
-        rezepte = service.filter_recipe_by_course(repo,gangeingabe)
+        rezepte = service.match_any_search_recipes(repo,gangeingabe)
         print()
         for i, rezept in enumerate(rezepte, start=1):
             print(f"{i}. {rezept.name}")
@@ -98,7 +98,7 @@ def show_recipe_by_ingredient(repo):
         if zutat == ["0"]:
             return
         
-        rezepte = service.filter_recipe_by_ingredient(repo,zutat)
+        rezepte = service.match_any_search_recipes(repo,zutat)
 
         
 
@@ -134,7 +134,7 @@ def show_recipe_by_name(repo):
         print()
         for i, rezept in enumerate(service.all_recipes(repo), start=1):
             print(f"{i}. {rezept.name}")
-        gerichte = service.filter_recipe_by_name(repo,"")
+        gerichte = service.match_any_search_recipes(repo,"")
         nummer = eingabezahl_pruefen("\nWählen sie bitte die Nummer des Gerichtes,\n"
         "geben sie 0 ein um zurück zur Kriterienauswahl zu gelangen:\n",min_value=0,max_value=len(gerichte))
 
