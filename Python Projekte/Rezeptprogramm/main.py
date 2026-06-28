@@ -4,7 +4,6 @@ import rezeptliste_services as service
 from rezeptliste_repository import JsonRezeptRepository
 import fastapi
 from typing import List
-from fastapi import Query
 import rezeptliste_model as model
 import rezeptliste_schemas as schemas
 app = fastapi.FastAPI()  #erstellt API Anwendung
@@ -35,50 +34,78 @@ Format um datenübergreifend von a nach b zu senden ist JSON. Quasi die Europale
 def root():
     return {"message": "Moin Moin meine aktiven Freunde"}
 
-@app.get("/rezepte")
+@app.get("/rezepte",status_code=200,response_model=list[schemas.RecipeResponse])
 def find_all_recipes():
     return repo.all()
 
-@app.get("/rezepte/suchen")
+@app.get("/rezepte/suchen",status_code=200,response_model=list[schemas.RecipeResponse])
 def search_recipes(
     name: str | None = None,
     gang: str | None = None,
-    match: str = Query(default="any"),
-    zutaten: List[str] = Query(default=[])):
+    match: str = fastapi.Query(default="any"),
+    zutaten: List[str] = fastapi.Query(default=[])):
+
+    match = match.strip().lower()
 
     if match == "all":
-        return service.match_all_search_recipes(repo,name,gang,zutaten)
+        all_match_recipe = service.match_all_search_recipes(repo,name,gang,zutaten)
         
-    if match == "any":
-        return service.match_any_search_recipes(repo,name,gang,zutaten)
+        if all_match_recipe is None:
+            raise fastapi.HTTPException(status_code=404, detail="Kein passendes Rezept gefunden")
 
+        return all_match_recipe
 
-@app.get("/rezepte/exakt/{sucheingabe}")
+    elif match == "any":
+        any_match_recipe = service.match_any_search_recipes(repo,name,gang,zutaten)
+
+        if any_match_recipe is None:
+            raise fastapi.HTTPException(status_code=404, detail="Kein passendes Rezept gefunden")
+        
+        return any_match_recipe
+    
+    else:
+        raise fastapi.HTTPException(status_code=400,detail="match muss any oder all sein")
+    
+    
+    
+
+@app.get("/rezepte/exakt/{sucheingabe}", status_code=200,response_model=schemas.RecipeResponse)
 def find_recipe_endpoint(sucheingabe: str):
-    return service.find_exact_recipe(repo, sucheingabe)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
+    recipe = service.find_exact_recipe(repo, sucheingabe)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
 
-@app.post("/rezepte/speicher/erstellen")
+    if recipe is None:
+        raise fastapi.HTTPException(status_code=404, detail="Rezept nicht gefunden")
+    
+    return recipe
+    
+
+@app.post("/rezepte/speicher/erstellen", status_code=201,response_model=schemas.RecipeResponse)
 def create_recipe_endpoint(rezept_daten: schemas.RecipeCreate):      #rezept_daten ist die variable für die eingegebenen Daten des neu zu erstellenden Rezeptes 
-    return service.create_recipe(repo,rezept_daten)
+    createdrecipe = service.create_recipe(repo,rezept_daten)
 
-@app.delete("/rezepte/speicher/löschen/{rezeptname}")
+    if createdrecipe is None:
+        raise fastapi.HTTPException(status_code=400, detail="Rezept konnte nicht erstellt werden")
+    
+    return createdrecipe
+
+@app.delete("/rezepte/speicher/löschen/{rezeptname}", status_code=200,response_model=schemas.MessageResponse)
 def delete_recipe_endpoint(rezeptname: str):
-    success = service.delete_recipe(repo,rezeptname)
+    deletedrecipe = service.delete_recipe(repo,rezeptname)
 
-    if not success:
+    if not deletedrecipe:           # is None ist hier fehleranfällig weil die delete_recipe funktion nur True oder False zurückgibt und kein erstelltes rezept oder ein gesuchtes rezept
         raise fastapi.HTTPException(status_code=404, detail="Löschung ist fehlgeschlagen!")
     
-    return {"Info":"Rezept wurde gelöscht!"}
+    return {"info":"Rezept wurde gelöscht!"}
 
-@app.patch("/rezepte/speicher/update")
+@app.patch("/rezepte/speicher/update",status_code=200,response_model=schemas.MessageResponse)
 def update_recipe_endpoint(rezept_daten: schemas.UpdateCreate ):
-    success = service.update_recipe(repo,rezept_daten)
+    updatedrecipe = service.update_recipe(repo,rezept_daten)
 
-    if not success:
-        raise fastapi.HTTPException(status_code=404, detail="Rezept, Zutat oder Attribut nicht gefunden")
+    if not updatedrecipe:
+        raise fastapi.HTTPException(status_code=404, detail="Update fehlgeschlagen.")
 
     
-    return {"Info":"Update erfolgreich!"}
+    return {"info":"Update erfolgreich!"}
     
 
 
@@ -102,7 +129,7 @@ def cli_starten():
             ui.rezepte_ansehen(repo)
 
 
-        if Menueauswahl == "2":
+        elif Menueauswahl == "2":
 
             ui.update_recipe(repo)
 

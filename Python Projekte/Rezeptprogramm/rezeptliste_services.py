@@ -19,9 +19,6 @@ import rezeptliste_schemas as schemas
 ######## BASISZUGRIFF - LESEN #################################################################################################################################
 
  
-def all_recipes(repo: JsonRezeptRepository) -> List[model.Rezept]:
-    return repo.all()
-
 def find_exact_recipe(repo: JsonRezeptRepository, recipename: str) -> Optional[model.Rezept]:
 
     recipes = repo.all()
