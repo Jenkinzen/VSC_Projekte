@@ -19,7 +19,6 @@ class JsonRezeptRepository:
                                                 # [ein wirklicher Pfad zu einem Speicherplatz auf der Festplatte, ist so anders für mich weils vorher ja nur referenzen auf andere Layer waren ])
         self._gerichte: List[model.Rezept] = []         # quasi List<model.Rezept> = new Arraylist<>() in python version | Neue leere Liste wird erstellt in die dann die Rezepte aus dem repo rein geladen werden.
 
-    # ---- Zugriff ----
     def all(self) -> List[model.Rezept]:                       # def alle(self) -> List[model.Rezept]: ist quasi DATENTYP OUTPUT: ArrayList<Model.Rezept> METHODENNAME: alle INPUTPARAMETER(self)[self im bezug auf die repository class, also Repository Objekt].
         # Optional: return list(self._gerichte) um Kopie zu geben
         return self._gerichte
@@ -31,7 +30,6 @@ class JsonRezeptRepository:
     def remove(self, recipe: model.Rezept) -> None:
         self._gerichte.remove(recipe)
 
-    # ---- Persistenz ----
     def load(self) -> None:
         if not self._datei.exists():
             self._gerichte = []
@@ -82,7 +80,9 @@ class JsonRezeptRepository:
         with open(self._datei, "w", encoding="utf-8") as f:
             json.dump(daten, f, indent=2, ensure_ascii=False)
 
-    # ---- Komfortzugriff ----
+    def update(self,rezept: model.Rezept) -> None:
+        self.save()
+
     def __getitem__(self, index: int) -> model.Rezept:
         return self._gerichte[index]
 
@@ -101,9 +101,9 @@ class JsonRezeptRepository:
 class SqlRezeptRepository:
     def __init__(self,db_datei: Path):
         self._db_datei = db_datei
-        self._connection = sql.connect(self._db_datei)     #hier kommt kein DB pfad in die klammer, der wird in rezeptliste_api definiert (SoC + universales repo für verschiedene DB's)
-        self._connection.row_factory = sql.Row              # dafür damit man später spalten als name lesen kann
-        self._connection.execute("PRAGMA foreign_keys = ON")
+        self._connection = sql.connect(self._db_datei,check_same_thread=False)     #hier kommt kein DB pfad in die klammer, der wird in rezeptliste_api definiert (SoC + universales repo für verschiedene DB's)
+        self._connection.row_factory = sql.Row                                     # dafür damit man später spalten als name lesen kann
+        self._connection.execute("PRAGMA foreign_keys = ON")                       # check_same_thread=False ist dafür das mehrere Programmprozesse gleichzeitig mit sql connecten können ohne das sql stresst ( quasi TCP aber bezogen auf Programmprozesse und nicht Serververbindungen)
         self.create_tables() 
 
     def create_tables(self):
@@ -129,6 +129,52 @@ class SqlRezeptRepository:
         
         self._connection.commit()
 
+    def all(self) -> list[model.Rezept]:
+        recipe_rows = self._connection.execute(
+            """SELECT id AS recipe_id, name, zubereitung, gang, notizen
+            FROM recipes
+            """
+        ).fetchall() # hol mir die oben SELECTeten Daten alle ( gibt auch fetchone (erste Datei[mit Datei ist eine Zeile gemeint also ein Rezept mit allen attributen]))
+
+        rezepte = []
+
+        for recipe_row in recipe_rows:
+            ingredient_rows = self._connection.execute(
+                """
+                SELECT id AS ingredient_id,zutatenname, menge, einheit
+                FROM recipe_ingredients
+                WHERE recipe_id = ?
+                """,(recipe_row["recipe_id"],)
+            ).fetchall()
+
+            zutaten = []
+
+            for row in ingredient_rows:
+                zutat = model.Zutaten(
+                    zutat_id=row["ingredient_id"],
+                    rezept_id=recipe_row["recipe_id"],
+                    name=row["zutatenname"],
+                    menge= row["menge"],
+                    einheit=row["einheit"]
+                    )
+                zutaten.append(zutat)
+
+
+            
+
+            rezept = model.Rezept(
+                rezept_id=recipe_row["recipe_id"],
+                name=recipe_row["name"],
+                zutaten=zutaten,
+                zubereitung=recipe_row["zubereitung"],
+                gang=recipe_row["gang"],
+                notizen=recipe_row["notizen"]
+            )
+
+            rezepte.append(rezept)
+
+        return rezepte
+
     def add(self,rezept: model.Rezept):
         cursor = self._connection.execute("""
                                             INSERT INTO recipes (name,zubereitung,gang,notizen)
@@ -138,7 +184,7 @@ class SqlRezeptRepository:
                                             rezept.gang,
                                             rezept.notizen))
         
-        recipe_id = cursor.lastrowid
+        recipe_id = cursor.lastrowid        # also lastrowid = die automatisch durch sql zugeteilte id des eben erstellten rezeptes
 
         for zutat in rezept.zutaten:
             self._connection.execute("""
@@ -156,42 +202,45 @@ class SqlRezeptRepository:
         self._connection.commit()
         return rezept
 
-    def all(self) -> list[model.Rezept]:
-        recipe_rows = self._connection.execute(
-            """SELECT id, name, zubereitung, gang, notizen
-            FROM recipes
-            """
-        ).fetchall() # hol mir die oben SELECTeten Daten alle ( gibt auch fetchone (erste Datei[mit Datei ist eine Zeile gemeint also ein Rezept mit allen attributen]))
+    def update(self,rezept: model.Rezept):
+        self._connection.execute("""
+            UPDATE recipes SET name = ?,zubereitung = ?,gang = ?,notizen = ? WHERE id = ?""",
+            (rezept.name,rezept.zubereitung,rezept.gang,rezept.notizen,rezept.rezept_id,))
+        
+        for zutat in rezept.zutaten:
+            self._connection.execute("""
+                UPDATE recipe_ingredients SET zutatenname = ?,menge = ?, einheit = ? WHERE recipe_id = ?""",
+                (zutat.name,zutat.menge,zutat.einheit,zutat.rezept_id))
+            
+        self._connection.commit()
 
-        rezepte = []
+    def remove(self,rezept: model.Rezept) -> None:
+        recipe_row = self._connection.execute("""
+                                    SELECT id
+                                 FROM recipes
+                                 WHERE name = ?
+                                    """,                    # erst in """ das sql Statement mit ? als variablenplatzhalter und danach "," und dann in klammern die variable, bei mehreren ? chronologisch in klammern (variable1,variable2,etc..) 
+                                    (rezept.name,)          # auch bei 1 variable ein "," danach einfach klammer zu machen weil in der klammer immer ein Tupel stehen muss. 
+                                    ).fetchone()
+        if recipe_row is None:
+            return
+        
+        recipe_id = recipe_row["id"]
 
-        for recipe_row in recipe_rows:
-            ingredient_rows = self._connection.execute(
-                """
-                SELECT zutatenname, menge, einheit
-                FROM recipe_ingredients
-                WHERE recipe_id = ?
-                """,(recipe_row["id"],)
-            ).fetchall()
+        self._connection.execute(
+            """DELETE FROM recipe_ingredients
+            WHERE recipe_id = ?
+            """,
+            (recipe_id,)
+        )
 
-            zutaten = [model.Zutaten(
-                name=row["zutatenname"],
-                menge= row["menge"],
-                einheit=row["einheit"]
-            ) for row in ingredient_rows
-            ]
+        self._connection.execute(
+            """DELETE FROM recipes
+            WHERE id = ?
+            """,
+            (recipe_id,)
+        )
 
-            rezept = model.Rezept(
-                name=recipe_row["name"],
-                zutaten=zutaten,
-                zubereitung=recipe_row["zubereitung"],
-                gang=recipe_row["gang"],
-                notizen=recipe_row["notizen"]
-            )
-
-            rezepte.append(rezept)
-
-        return rezepte
-
+        self._connection.commit()
 
  

@@ -19,17 +19,26 @@ import rezeptliste_schemas as schemas
 ######## BASISZUGRIFF - LESEN #################################################################################################################################
 
  
-def find_exact_recipe(repo: JsonRezeptRepository, recipename: str) -> Optional[model.Rezept]:
+def find_exact_recipe(repo, recipe_id: int) -> Optional[model.Rezept]:
 
     recipes = repo.all()
 
-    for xyz in recipes:
-        if xyz.name.lower().strip() == recipename.lower().strip():
-            return xyz
+    for recipe in recipes:
+        if recipe.rezept_id == recipe_id:
+            return recipe
         else:
             return None
         
-def find_ingredient_in_all_recipes(repo: JsonRezeptRepository, ingredientname: str) -> Optional[model.Zutaten]:
+def find_exact_ingredient(repo,recipe: model.Rezept, zutat_id: int) -> Optional[model.Zutaten]:
+
+    for ingredient in recipe.zutaten:
+        if zutat_id == ingredient.zutat_id:
+            return ingredient
+        else:
+            return None
+
+        
+def find_ingredient_in_all_recipes(repo, ingredientname: str) -> Optional[model.Zutaten]:
         
         recipes = repo.all()
 
@@ -39,7 +48,7 @@ def find_ingredient_in_all_recipes(repo: JsonRezeptRepository, ingredientname: s
                     return zutat
         return None
 
-def find_ingredient_in_one_recipe(repo: JsonRezeptRepository, recipename:str,ingredientname:str) -> Optional[model.Zutaten]:
+def find_ingredient_in_one_recipe(repo, recipename:str,ingredientname:str) -> Optional[model.Zutaten]:
         
         recipes = repo.all()
 
@@ -52,22 +61,22 @@ def find_ingredient_in_one_recipe(repo: JsonRezeptRepository, recipename:str,ing
         return None
 
 ######## VALIDIERUNG ##############################################################################################################################################
-def check_recipename(repo: JsonRezeptRepository,recipename) -> bool:
+def check_recipename(repo,recipename) -> bool:
     if find_exact_recipe(repo,recipename):
         return True
     return False
 
-def check_attribute(repo: JsonRezeptRepository,rezeptname,attributname) -> bool:
+def check_attribute(repo,rezeptname,attributname) -> bool:
     if hasattr(find_exact_recipe(repo,rezeptname),attributname) is not None:
         return True
     return False
 
-def check_ingredient_attribute(repo: JsonRezeptRepository,recipename,ingredientname,attributename) -> bool:
+def check_ingredient_attribute(repo,recipename,ingredientname,attributename) -> bool:
     if hasattr(find_ingredient_in_one_recipe(repo,recipename,ingredientname),attributename) is not None:
         return True
     return False
 
-def check_ingredient_in_recipe(repo: JsonRezeptRepository,recipename,ingredientname) -> bool:
+def check_ingredient_in_recipe(repo,recipename,ingredientname) -> bool:
     if find_ingredient_in_one_recipe(repo,recipename,ingredientname)is not None:
         return True
     return False
@@ -87,7 +96,7 @@ def validate_course(recipes, courseinput):
 
 ######## FILTER ####################################################################################################################################################
 
-def match_all_search_recipes(repo: JsonRezeptRepository, name: str | None = None ,gang:str | None = None ,zutaten: List[str] | None = None) -> List[model.Rezept]:
+def match_all_search_recipes(repo, name: str | None = None ,gang:str | None = None ,zutaten: List[str] | None = None) -> List[model.Rezept]:
 
     recipes = repo.all()                #macht das recipes eine Kopie der Liste aller Rezepte ist , wenn jetzt bei "name" schon Sushibowl als Treffer übernommen wird,
                                         #ist Sushibowl quasi aus der recipes Liste raus und kann bei der "gang" Suche nicht nochmal übernommen werden.
@@ -104,7 +113,7 @@ def match_all_search_recipes(repo: JsonRezeptRepository, name: str | None = None
 
     return recipes
 
-def match_any_search_recipes(repo: JsonRezeptRepository, name: str | None = None , gang:str | None = None , zutaten: List[str] | None=None) -> List[model.Rezept]:
+def match_any_search_recipes(repo, name: str | None = None , gang:str | None = None , zutaten: List[str] | None=None) -> List[model.Rezept]:
 
     recipes = repo.all()
 
@@ -143,7 +152,7 @@ def match_any_search_recipes(repo: JsonRezeptRepository, name: str | None = None
 
     
 def create_recipe(
-    repo: JsonRezeptRepository,
+    repo,
     recipe_datas: schemas.RecipeCreate,
 ) -> model.Rezept:
     zutaten = [model.Zutaten(name=z.zutatenname,menge=z.menge,einheit=z.einheit) for z in recipe_datas.zutaten]
@@ -156,23 +165,63 @@ def create_recipe(
         notizen=recipe_datas.notizen
     )
 
-    repo.add(new_recipe)
-    repo.save()
-    return new_recipe
+    created_recipe = repo.add(new_recipe)
 
-def delete_recipe(repo: JsonRezeptRepository, recipename : str) -> bool:
+    if hasattr(repo, "save"):                   #hasattr kann auch methoden prüfen -> prüft ob das repo ne "save" methode hat ( die nur das json repo hat aber nicht das sql repo) damit man die Funktion über beide repos nutzen kann.
+        repo.save()
 
-    recipe = find_exact_recipe(repo,recipename)
+    return created_recipe
+
+def delete_recipe(repo, recipe_id : int) -> bool:
+
+    recipe = find_exact_recipe(repo,recipe_id)
 
     if recipe is None:
         return False
     
     repo.remove(recipe)
-    repo.save()
+    
+    if hasattr(repo, "save"):
+        repo.save()
+
     return True
 
-def update_recipe(repo: JsonRezeptRepository, update_datas: schemas.UpdateCreate) -> bool:
-    recipe_to_update = find_exact_recipe(repo,update_datas.searched_recipe)
+def multi_update_recipe(repo, update_datas: schemas.MultiUpdateCreate) -> bool:
+    recipe_to_update = find_exact_recipe(repo,update_datas.rezept_id)
+    if recipe_to_update  is None:
+        return  False
+    
+    elif update_datas.aenderung is not "rezept" or "zutat":
+        return False
+    
+    elif update_datas.aenderung is None:
+        return False
+    
+    else:
+        if update_datas.aenderung.lower().strip() == "rezept":
+            if update_datas.name_neu is not None:
+                setattr(recipe_to_update,update_datas.name,update_datas.name_neu)
+            elif update_datas.zubereitung is not None:
+                setattr(recipe_to_update,update_datas.zubereitung,update_datas.zubereitung_neu)
+            elif update_datas.gang is not None:
+                setattr(recipe_to_update,update_datas.gang,update_datas.gang_neu)
+            elif update_datas.notizen is not None:
+                setattr(recipe_to_update,update_datas.notizen,update_datas.notizen_neu)
+            else:
+                return
+        
+        elif update_datas.aenderung.lower().strip() == "zutat":
+            for ingredientattribute in update_datas.zutaten: 
+                for ingredient in recipe_to_update.zutaten:
+                    if ingredientattribute.name_neu is not None:
+                        setattr(ingredient,update_datas.name,update_datas.name_neu)
+                    if ingredientattribute.menge_neu is not None:
+                        setattr(ingredient,)
+                    if ingredientattribute.einheit_neu is not None:
+                        setattr(ingredient,update_datas.name,update_datas.name_neu)    
+
+def update_recipe(repo, update_datas: schemas.UpdateCreate) -> bool:
+    recipe_to_update = find_exact_recipe(repo,update_datas.rezept_id)
     if recipe_to_update is None:
         return  False
     else:
@@ -183,17 +232,17 @@ def update_recipe(repo: JsonRezeptRepository, update_datas: schemas.UpdateCreate
             setattr(recipe_to_update,update_datas.recipeattribute,update_datas.change)
             
 
-        if update_datas.recipeattribute == "zutaten" and update_datas.ingredient_attribute and update_datas.searched_ingredient is not None:
+        if update_datas.recipeattribute == "zutaten" and update_datas.ingredient_attribute and update_datas.zutat_id is not None:
             for ingredient in recipe_to_update.zutaten:
-                if ingredient.name.lower().strip() == update_datas.searched_ingredient.lower().strip():
+                if ingredient.zutat_id  == update_datas.zutat_id:
                     if not hasattr(ingredient,update_datas.ingredient_attribute):
                         return False
                 
                     setattr(ingredient,update_datas.ingredient_attribute,update_datas.change)
-                    repo.save()
+                    repo.update(recipe_to_update)
                     return True
             return False
     
-    repo.save()
+    repo.update(recipe_to_update)
     return True
 

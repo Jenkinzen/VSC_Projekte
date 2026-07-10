@@ -22,14 +22,12 @@ DATEI = BASE_DIR / "databases" / "rezepte.json" #link zum speicherort der json D
 
 REPOSITORY_TYP = "sql"              # hier zwischen json und sql repo wechseln
 
-
-
 if REPOSITORY_TYP == "json":
     repo = JsonRezeptRepository(DATEI)   
     repo.load()
 
 elif REPOSITORY_TYP =="sql":
-    repo_sql = SqlRezeptRepository(DB_DATEI)
+    repo = SqlRezeptRepository(DB_DATEI)
 
 else:
     raise ValueError("Unbekannter Repository-Typ")
@@ -58,6 +56,7 @@ def root():
 @app.get("/rezepte",status_code=200,response_model=list[schemas.RecipeResponse])
 def find_all_recipes():
     return repo.all()
+    
 
 @app.get("/rezepte/suchen",status_code=200,response_model=list[schemas.RecipeResponse])
 def search_recipes(
@@ -71,7 +70,7 @@ def search_recipes(
     if match == "all":
         all_match_recipe = service.match_all_search_recipes(repo,name,gang,zutaten)
         
-        if all_match_recipe is None:
+        if not all_match_recipe:
             raise fastapi.HTTPException(status_code=404, detail="Kein passendes Rezept gefunden")
 
         return all_match_recipe
@@ -79,7 +78,7 @@ def search_recipes(
     elif match == "any":
         any_match_recipe = service.match_any_search_recipes(repo,name,gang,zutaten)
 
-        if any_match_recipe is None:
+        if not any_match_recipe:
             raise fastapi.HTTPException(status_code=404, detail="Kein passendes Rezept gefunden")
         
         return any_match_recipe
@@ -91,8 +90,8 @@ def search_recipes(
     
 
 @app.get("/rezepte/exakt/{sucheingabe}", status_code=200,response_model=schemas.RecipeResponse)
-def find_recipe_endpoint(sucheingabe: str):
-    recipe = service.find_exact_recipe(repo, sucheingabe)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
+def find_recipe_endpoint(recipe_id: int):
+    recipe = service.find_exact_recipe(repo, recipe_id)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
 
     if recipe is None:
         raise fastapi.HTTPException(status_code=404, detail="Rezept nicht gefunden")
@@ -110,8 +109,8 @@ def create_recipe_endpoint(rezept_daten: schemas.RecipeCreate):      #rezept_dat
     return createdrecipe
 
 @app.delete("/rezepte/speicher/löschen/{rezeptname}", status_code=200,response_model=schemas.MessageResponse)
-def delete_recipe_endpoint(rezeptname: str):
-    deletedrecipe = service.delete_recipe(repo,rezeptname)
+def delete_recipe_endpoint(rezept_id: int):
+    deletedrecipe = service.delete_recipe(repo,rezept_id)
 
     if not deletedrecipe:           # is None ist hier fehleranfällig weil die delete_recipe funktion nur True oder False zurückgibt und kein erstelltes rezept oder ein gesuchtes rezept
         raise fastapi.HTTPException(status_code=404, detail="Löschung ist fehlgeschlagen!")

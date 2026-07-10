@@ -2,8 +2,8 @@ from pathlib import Path
 import rezeptliste_services as service
 from rezeptliste_repository import JsonRezeptRepository
 import rezeptliste_schemas as schemas
-
-
+import textwrap
+import rezeptliste_model as model
 
 def eingabezahl_pruefen(prompt,min_value=None,max_value=None):
     while True:
@@ -38,6 +38,41 @@ def filter_auswaehlen():
 
 
 ###### ANZEIGE - MENÜ - FUNKTIONEN ################################################################################################################################################################
+
+def format_block(self, label, value, width=60):
+    wrapper = textwrap.TextWrapper(
+        width=width,
+        subsequent_indent=" " * 13
+    )
+
+    lines = []
+
+    if isinstance(value, list):
+        first = True
+        for item in value:
+            wrapper.initial_indent = f"{label:<13}" if first else " " * 13
+            first = False
+            lines.extend(wrapper.wrap(str(item)))
+    else:
+        wrapper.initial_indent = f"{label:<13}"
+        lines.extend(wrapper.wrap(str(value)))
+
+    return lines
+"""
+def show_recipe(model.Rezept):
+    output = []
+    output += model.Rezept._format_block("Rezept ID:", model.Rezept.rezept_id)
+    output += model.Rezept._format_block("Gericht:", model.Rezept.name)
+    output += model.Rezept._format_block("Zutaten:", model.Rezept.zutaten)
+    output += model.Rezept._format_block("Zubereitung:", model.Rezept.zubereitung)
+    output += model.Rezept._format_block("Notizen:", model.Rezept.notizen)
+    return output
+    """
+
+def show_ingredient(self):
+    if self.menge is None:
+        return self.name
+    return f"{self.name} ({self.menge} {self.einheit})"
 
 def show_recipe_by_course(repo):
     while True:

@@ -14,19 +14,52 @@ class RecipeCreate(BaseModel):          #Datenstruktur um Rezept zu erstellen
     gang: str
     notizen: str 
 
-class UpdateCreate(BaseModel):          #Datenstruktur um Rezept- bzw Zutatsattribut zu ändern 
-    searched_recipe: str
+class UpdateCreate(BaseModel):          #Datenstruktur um Rezept- bzw Zutatsattribut zu ändern
+    rezept_id: int
     change:str
     recipeattribute:str
-    searched_ingredient:str|None = None
+    zutat_id: int |None = None
     ingredient_attribute:str| None = None 
+    
+class MultiUpdateCreateIngredients(BaseModel):
+        zutat_id: int 
+        rezept_id: int 
+        name: str 
+        name_neu: str | None = None
+        menge: str 
+        menge_neu: str | None = None 
+        einheit: str 
+        einheit_neu: str | None = None
 
-class RecipeResponse(BaseModel):        #Datenstruktur um Rezept an den Nutzer auszugeben (bisher gleich wie RecipeCreate aber wird sich noch ändern)
+class MultiUpdateCreate(BaseModel):
+     aenderung: str
+     rezept_id: int
+     zutat_id: int | None = None
+     name: str 
+     name_neu: str | None = None
+     zutaten: list[MultiUpdateCreateIngredients] 
+     zubereitung: str 
+     zubereitung_neu: str | None = None
+     gang: str 
+     gang_neu: str | None = None
+     notizen: str 
+     notizen_neu: str | None = None 
+
+class IngredientResponse(BaseModel):
+    zutat_id: int 
+    rezept_id: int 
+    name: str 
+    menge: str | None = None
+    einheit: str | None = None
+
+class RecipeResponse(BaseModel):        #Datenstruktur um Rezept an den Nutzer auszugeben
     name: str                           #bspw wenn automatisch vom Server die Zeit erfasst wird wann das rezept erstellt wurde, bei Erstellung macht das der Server selbst
-    zutaten: list[IngredientCreate]     # deshalb würde das nicht in der Datenstruktur von "RecipeCreate" auftauchen aber hier weil es ja dem User angezeigt werden soll
+    zutaten: list[IngredientResponse]     # deshalb würde das nicht in der Datenstruktur von "RecipeCreate" auftauchen aber hier weil es ja dem User angezeigt werden soll
     zubereitung: str
     gang: str
     notizen: str 
+    rezept_id: int 
 
 class MessageResponse(BaseModel):
     info:str
+
