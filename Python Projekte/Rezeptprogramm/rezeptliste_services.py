@@ -191,7 +191,7 @@ def multi_update_recipe(repo, update_datas: schemas.MultiUpdateCreate) -> bool:
     if recipe_to_update  is None:
         return  False
     
-    elif update_datas.aenderung is not "rezept" or "zutat":
+    elif update_datas.aenderung.strip().lower() not in  ["rezept","zutat"]:
         return False
     
     elif update_datas.aenderung is None:
@@ -199,26 +199,41 @@ def multi_update_recipe(repo, update_datas: schemas.MultiUpdateCreate) -> bool:
     
     else:
         if update_datas.aenderung.lower().strip() == "rezept":
-            if update_datas.name_neu is not None:
-                setattr(recipe_to_update,update_datas.name,update_datas.name_neu)
-            elif update_datas.zubereitung is not None:
-                setattr(recipe_to_update,update_datas.zubereitung,update_datas.zubereitung_neu)
-            elif update_datas.gang is not None:
-                setattr(recipe_to_update,update_datas.gang,update_datas.gang_neu)
-            elif update_datas.notizen is not None:
-                setattr(recipe_to_update,update_datas.notizen,update_datas.notizen_neu)
+            if any([update_datas.name_neu is not None,update_datas.zubereitung_neu is not None,update_datas.gang_neu is not None,update_datas.notizen_neu is not None]):
+                if update_datas.name_neu is not None:
+                    setattr(recipe_to_update,"name",update_datas.name_neu)
+                if update_datas.zubereitung_neu is not None:
+                    setattr(recipe_to_update,"zubereitung",update_datas.zubereitung_neu)
+                if update_datas.gang_neu is not None:
+                    setattr(recipe_to_update,"gang",update_datas.gang_neu)
+                if update_datas.notizen_neu is not None:
+                    setattr(recipe_to_update,"notizen",update_datas.notizen_neu)
             else:
-                return
+                return False
         
         elif update_datas.aenderung.lower().strip() == "zutat":
-            for ingredientattribute in update_datas.zutaten: 
-                for ingredient in recipe_to_update.zutaten:
-                    if ingredientattribute.name_neu is not None:
-                        setattr(ingredient,update_datas.name,update_datas.name_neu)
-                    if ingredientattribute.menge_neu is not None:
-                        setattr(ingredient,)
-                    if ingredientattribute.einheit_neu is not None:
-                        setattr(ingredient,update_datas.name,update_datas.name_neu)    
+            if update_datas.zutat_id is not None:
+                ingredient_to_change = find_exact_ingredient(repo,recipe_to_update,update_datas.zutat_id)
+                if ingredient_to_change is not None:
+                    for ingredientattribute in update_datas.zutaten:        #für das attribut, aus den zutatsattributen, das verändert werden soll
+                        if any([ingredientattribute.name_neu is not None,ingredientattribute.menge_neu is not None,ingredientattribute.einheit_neu is not None]): 
+                            if ingredientattribute.name_neu is not None:
+                                setattr(ingredient_to_change,"name",ingredientattribute.name_neu)
+                            if ingredientattribute.menge_neu is not None:
+                                setattr(ingredient_to_change,"menge",ingredientattribute.menge_neu)
+                            if ingredientattribute.einheit_neu is not None:
+                                setattr(ingredient_to_change,"einheit",ingredientattribute.einheit_neu)  
+                        else:
+                            return False
+                else:
+                    return False
+            else:
+                return False
+        else:
+            return False
+    repo.update(recipe_to_update)        
+    return True                
+                              
 
 def update_recipe(repo, update_datas: schemas.UpdateCreate) -> bool:
     recipe_to_update = find_exact_recipe(repo,update_datas.rezept_id)

@@ -22,27 +22,19 @@ class UpdateCreate(BaseModel):          #Datenstruktur um Rezept- bzw Zutatsattr
     ingredient_attribute:str| None = None 
     
 class MultiUpdateCreateIngredients(BaseModel):
-        zutat_id: int 
-        rezept_id: int 
-        name: str 
+        
         name_neu: str | None = None
-        menge: str 
-        menge_neu: str | None = None 
-        einheit: str 
+        menge_neu: str | None = None  
         einheit_neu: str | None = None
 
 class MultiUpdateCreate(BaseModel):
      aenderung: str
-     rezept_id: int
+     rezept_id: int 
      zutat_id: int | None = None
-     name: str 
      name_neu: str | None = None
-     zutaten: list[MultiUpdateCreateIngredients] 
-     zubereitung: str 
+     zutaten: list[MultiUpdateCreateIngredients] = []
      zubereitung_neu: str | None = None
-     gang: str 
      gang_neu: str | None = None
-     notizen: str 
      notizen_neu: str | None = None 
 
 class IngredientResponse(BaseModel):
