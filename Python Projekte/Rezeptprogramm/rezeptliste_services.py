@@ -179,29 +179,5 @@ def multi_update_recipe(repo, update_datas: schemas.MultiUpdateCreate) -> bool:
     return True                
                               
 
-def update_recipe(repo, update_datas: schemas.UpdateCreate) -> bool:
-    recipe_to_update = find_exact_recipe(repo,update_datas.rezept_id)
-    if recipe_to_update is None:
-        return  False
-    else:
-        if update_datas.recipeattribute != "zutaten":
-            if not hasattr(recipe_to_update,update_datas.recipeattribute):
-                return False
-        
-            setattr(recipe_to_update,update_datas.recipeattribute,update_datas.change)
-            
 
-        if update_datas.recipeattribute == "zutaten" and update_datas.ingredient_attribute and update_datas.zutat_id is not None:
-            for ingredient in recipe_to_update.zutaten:
-                if ingredient.zutat_id  == update_datas.zutat_id:
-                    if not hasattr(ingredient,update_datas.ingredient_attribute):
-                        return False
-                
-                    setattr(ingredient,update_datas.ingredient_attribute,update_datas.change)
-                    repo.update(recipe_to_update)
-                    return True
-            return False
-    
-    repo.update(recipe_to_update)
-    return True
 
