@@ -128,7 +128,7 @@ def delete_recipe(repo, recipe_id : int) -> bool:
 
     return True
 
-def multi_update_recipe(repo, update_datas: schemas.MultiUpdateCreate) -> bool:
+def update_recipe(repo, update_datas: schemas.RecipeUpdate) -> bool:
     recipe_to_update = find_exact_recipe(repo,update_datas.rezept_id)
     if recipe_to_update  is None:
         return  False

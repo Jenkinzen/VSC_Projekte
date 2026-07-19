@@ -14,18 +14,18 @@ class RecipeCreate(BaseModel):          #Datenstruktur um Rezept zu erstellen
     gang: str
     notizen: str 
     
-class MultiUpdateCreateIngredients(BaseModel):
+class IngredientsUpdate(BaseModel):
         
         name_neu: str | None = None
         menge_neu: str | None = None  
         einheit_neu: str | None = None
 
-class MultiUpdateCreate(BaseModel):
+class RecipeUpdate(BaseModel):
      aenderung: str
      rezept_id: int 
      zutat_id: int | None = None
      name_neu: str | None = None
-     zutaten: list[MultiUpdateCreateIngredients] = []
+     zutaten: list[IngredientsUpdate] = []
      zubereitung_neu: str | None = None
      gang_neu: str | None = None
      notizen_neu: str | None = None 

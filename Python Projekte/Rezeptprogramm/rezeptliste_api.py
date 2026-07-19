@@ -118,8 +118,8 @@ def delete_recipe_endpoint(rezept_id: int):
     return {"info":"Rezept wurde gelöscht!"}
 
 @app.patch("/rezepte/speicher/multiupdate",status_code=200,response_model=schemas.MessageResponse)
-def multi_update_recipe_endpoint(rezept_daten: schemas.MultiUpdateCreate):
-    updatedrecipe = service.multi_update_recipe(repo,rezept_daten)
+def update_recipe_endpoint(rezept_daten: schemas.RecipeUpdate):
+    updatedrecipe = service.update_recipe(repo,rezept_daten)
 
     if not updatedrecipe:
         raise fastapi.HTTPException(status_code=404, detail="Update fehlgeschlagen.")
