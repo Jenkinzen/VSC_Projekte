@@ -1,7 +1,5 @@
 import rezeptliste_model as model
-import rezeptliste_storage as storage
 from typing import List, Optional
-from rezeptliste_repository import JsonRezeptRepository
 import rezeptliste_schemas as schemas
 
 #LIST COMP CHEAT SHEET
@@ -26,73 +24,17 @@ def find_exact_recipe(repo, recipe_id: int) -> Optional[model.Rezept]:
     for recipe in recipes:
         if recipe.rezept_id == recipe_id:
             return recipe
-        else:
-            return None
+    else:
+        return None
         
 def find_exact_ingredient(repo,recipe: model.Rezept, zutat_id: int) -> Optional[model.Zutaten]:
+
 
     for ingredient in recipe.zutaten:
         if zutat_id == ingredient.zutat_id:
             return ingredient
-        else:
-            return None
-
-        
-def find_ingredient_in_all_recipes(repo, ingredientname: str) -> Optional[model.Zutaten]:
-        
-        recipes = repo.all()
-
-        for recipe in recipes:
-            for zutat in recipe.zutaten:
-                if ingredientname.strip().lower() == zutat.name.strip().lower():
-                    return zutat
+    else:
         return None
-
-def find_ingredient_in_one_recipe(repo, recipename:str,ingredientname:str) -> Optional[model.Zutaten]:
-        
-        recipes = repo.all()
-
-        for recipe in recipes:
-            if recipename.lower().strip() == recipe.name.strip().lower():
-                for zutat in recipe.zutaten:
-                    if ingredientname.strip().lower() == zutat.name.lower().strip():
-                        return zutat
-                return None    
-        return None
-
-######## VALIDIERUNG ##############################################################################################################################################
-def check_recipename(repo,recipename) -> bool:
-    if find_exact_recipe(repo,recipename):
-        return True
-    return False
-
-def check_attribute(repo,rezeptname,attributname) -> bool:
-    if hasattr(find_exact_recipe(repo,rezeptname),attributname) is not None:
-        return True
-    return False
-
-def check_ingredient_attribute(repo,recipename,ingredientname,attributename) -> bool:
-    if hasattr(find_ingredient_in_one_recipe(repo,recipename,ingredientname),attributename) is not None:
-        return True
-    return False
-
-def check_ingredient_in_recipe(repo,recipename,ingredientname) -> bool:
-    if find_ingredient_in_one_recipe(repo,recipename,ingredientname)is not None:
-        return True
-    return False
-
-def check_course(courseinput):
-    return courseinput.lower().strip() in storage.GUELTIGE_GAENGE
-
-def validate_course(recipes, courseinput):
-    """wenn irgendwas (any) in rezept.Gang das beinhaltet was der input war dann gibs raus
-   any ----> auch wenn man "des" eingibt zeigt er dessert an weil des dadrin steckt.
-   ohne any würde er dann nichts raus geben."""
-    gang = courseinput.strip().lower()
-    return any(
-        rezept.gang.strip().lower() == gang
-        for rezept in recipes
-    )
 
 ######## FILTER ####################################################################################################################################################
 
@@ -102,10 +44,10 @@ def match_all_search_recipes(repo, name: str | None = None ,gang:str | None = No
                                         #ist Sushibowl quasi aus der recipes Liste raus und kann bei der "gang" Suche nicht nochmal übernommen werden.
 
     if name:
-        recipes =[recipe for recipe in recipes if name in recipe.name.strip().lower()]
+        recipes =[recipe for recipe in recipes if name.strip().lower() in recipe.name.strip().lower()]
             
     if gang:
-        recipes =[recipe for recipe in recipes if gang in recipe.gang.strip().lower()]
+        recipes =[recipe for recipe in recipes if gang.strip().lower() in recipe.gang.strip().lower()]
 
     if zutaten:
         recipes =[recipe for recipe in recipes if all(any(zutat in einzelne_zutat.name.strip().lower() for einzelne_zutat in recipe.zutaten)
@@ -190,47 +132,49 @@ def multi_update_recipe(repo, update_datas: schemas.MultiUpdateCreate) -> bool:
     recipe_to_update = find_exact_recipe(repo,update_datas.rezept_id)
     if recipe_to_update  is None:
         return  False
-    
-    elif update_datas.aenderung.strip().lower() not in  ["rezept","zutat"]:
+
+    if update_datas.aenderung is None:
         return False
     
-    elif update_datas.aenderung is None:
+    if update_datas.aenderung.strip().lower() not in  ["rezept","zutat"]:
         return False
     
-    else:
-        if update_datas.aenderung.lower().strip() == "rezept":
-            if any([update_datas.name_neu is not None,update_datas.zubereitung_neu is not None,update_datas.gang_neu is not None,update_datas.notizen_neu is not None]):
-                if update_datas.name_neu is not None:
-                    setattr(recipe_to_update,"name",update_datas.name_neu)
-                if update_datas.zubereitung_neu is not None:
-                    setattr(recipe_to_update,"zubereitung",update_datas.zubereitung_neu)
-                if update_datas.gang_neu is not None:
-                    setattr(recipe_to_update,"gang",update_datas.gang_neu)
-                if update_datas.notizen_neu is not None:
-                    setattr(recipe_to_update,"notizen",update_datas.notizen_neu)
-            else:
-                return False
-        
-        elif update_datas.aenderung.lower().strip() == "zutat":
-            if update_datas.zutat_id is not None:
-                ingredient_to_change = find_exact_ingredient(repo,recipe_to_update,update_datas.zutat_id)
-                if ingredient_to_change is not None:
-                    for ingredientattribute in update_datas.zutaten:        #für das attribut, aus den zutatsattributen, das verändert werden soll
-                        if any([ingredientattribute.name_neu is not None,ingredientattribute.menge_neu is not None,ingredientattribute.einheit_neu is not None]): 
-                            if ingredientattribute.name_neu is not None:
-                                setattr(ingredient_to_change,"name",ingredientattribute.name_neu)
-                            if ingredientattribute.menge_neu is not None:
-                                setattr(ingredient_to_change,"menge",ingredientattribute.menge_neu)
-                            if ingredientattribute.einheit_neu is not None:
-                                setattr(ingredient_to_change,"einheit",ingredientattribute.einheit_neu)  
-                        else:
-                            return False
-                else:
-                    return False
+    
+    
+    if update_datas.aenderung.lower().strip() == "rezept":
+        if any([update_datas.name_neu is not None,update_datas.zubereitung_neu is not None,update_datas.gang_neu is not None,update_datas.notizen_neu is not None]):
+            if update_datas.name_neu is not None:
+                setattr(recipe_to_update,"name",update_datas.name_neu)
+            if update_datas.zubereitung_neu is not None:
+                setattr(recipe_to_update,"zubereitung",update_datas.zubereitung_neu)
+            if update_datas.gang_neu is not None:
+                setattr(recipe_to_update,"gang",update_datas.gang_neu)
+            if update_datas.notizen_neu is not None:
+                setattr(recipe_to_update,"notizen",update_datas.notizen_neu)
+        else:
+            return False
+    
+    elif update_datas.aenderung.lower().strip() == "zutat":
+        if update_datas.zutat_id is not None:
+            ingredient_to_change = find_exact_ingredient(repo,recipe_to_update,update_datas.zutat_id)
+            if ingredient_to_change is not None:
+                for ingredientattribute in update_datas.zutaten:        #für das attribut, aus den zutatsattributen, das verändert werden soll
+                    if any([ingredientattribute.name_neu is not None,ingredientattribute.menge_neu is not None,ingredientattribute.einheit_neu is not None]): 
+                        if ingredientattribute.name_neu is not None:
+                            setattr(ingredient_to_change,"name",ingredientattribute.name_neu)
+                        if ingredientattribute.menge_neu is not None:
+                            setattr(ingredient_to_change,"menge",ingredientattribute.menge_neu)
+                        if ingredientattribute.einheit_neu is not None:
+                            setattr(ingredient_to_change,"einheit",ingredientattribute.einheit_neu)  
+                    else:
+                        return False
             else:
                 return False
         else:
             return False
+    else:
+        return False
+    
     repo.update(recipe_to_update)        
     return True                
                               
