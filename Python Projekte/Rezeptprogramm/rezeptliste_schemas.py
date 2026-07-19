@@ -13,13 +13,6 @@ class RecipeCreate(BaseModel):          #Datenstruktur um Rezept zu erstellen
     zubereitung: str
     gang: str
     notizen: str 
-
-class UpdateCreate(BaseModel):          #Datenstruktur um Rezept- bzw Zutatsattribut zu ändern
-    rezept_id: int
-    change:str
-    recipeattribute:str
-    zutat_id: int |None = None
-    ingredient_attribute:str| None = None 
     
 class MultiUpdateCreateIngredients(BaseModel):
         
