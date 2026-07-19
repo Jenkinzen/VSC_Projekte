@@ -24,6 +24,19 @@ class JsonRezeptRepository:
         return self._gerichte
 
     def add(self, recipe: model.Rezept) -> model.Rezept:
+
+        highest_rezept_id = 0
+
+        for gericht in self._gerichte:
+            
+            if gericht.rezept_id is not None:
+                if gericht.rezept_id > highest_rezept_id:
+                    highest_rezept_id = gericht.rezept_id
+
+                
+        recipe.rezept_id = highest_rezept_id + 1
+                
+                
         self._gerichte.append(recipe)
         return recipe
 
