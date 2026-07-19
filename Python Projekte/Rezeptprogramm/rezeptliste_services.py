@@ -44,13 +44,25 @@ def match_all_search_recipes(repo, name: str | None = None ,gang:str | None = No
                                         #ist Sushibowl quasi aus der recipes Liste raus und kann bei der "gang" Suche nicht nochmal übernommen werden.
 
     if name:
-        recipes =[recipe for recipe in recipes if name.strip().lower() in recipe.name.strip().lower()]
+        recipes =[recipe 
+                  for recipe in recipes 
+                  if name.strip().lower() in recipe.name.strip().lower()]
             
     if gang:
-        recipes =[recipe for recipe in recipes if gang.strip().lower() in recipe.gang.strip().lower()]
+        recipes =[recipe 
+                  for recipe in recipes 
+                  if gang.strip().lower() in recipe.gang.strip().lower()]
 
     if zutaten:
-        recipes =[recipe for recipe in recipes if all(any(zutat in einzelne_zutat.name.strip().lower() for einzelne_zutat in recipe.zutaten)
+        recipes =[recipe 
+                  for recipe in recipes 
+                  if all(any(zutat in           # check ob ALLE(all) erfragten Zutaten IRGENDWO(any) in der Zutatenliste des Rezeptes stehen.
+                                                # ohne all würde man nicht validieren das ALLE gesuchten Zutaten auch True sind. (sind ALLE true?)
+                                                # ohne any würde man nicht checken ob es IRGENDWO in der Liste eine Zutat gibt die True zurück gibt. (ist das irgendwo TRUE?)
+                                                # all checkt ob alle any rückgabewerte True sind , wenn ja gibt all auch True zurück und somit wird validiert das alle
+                                                # gesuchten Zutaten in diesem Rezept vorhanden sind.
+
+                             einzelne_zutat.name.strip().lower() for einzelne_zutat in recipe.zutaten) 
             for zutat in zutaten)]
 
     return recipes
@@ -61,29 +73,29 @@ def match_any_search_recipes(repo, name: str | None = None , gang:str | None = N
 
     hit_list= []
 
-    for xyz in recipes:
+    for recipe in recipes:
         if name == None:
             continue
         else:
-            if name in xyz.name.strip().lower():
-                hit_list.append(xyz)
+            if name.strip().lower() in recipe.name.strip().lower():
+                hit_list.append(recipe)
 
-    for xyz in recipes:
+    for recipe in recipes:
         if gang == None:
             continue
         else:
-            if gang in xyz.gang.strip().lower()and xyz not in hit_list:
-                hit_list.append(xyz)
+            if gang.strip().lower() in recipe.gang.strip().lower()and recipe not in hit_list:
+                hit_list.append(recipe)
             
 
-    for xyz in recipes:                                 # für variable in allen rezepten
+    for recipe in recipes:                                 # für variable in allen rezepten
         if zutaten == None:
             continue
         else:
-                for gesuchte_zutat in xyz.zutaten:      # für variable in den zutaten aller rezepte    
+                for gesuchte_zutat in recipe.zutaten:      # für variable in den zutaten aller rezepte    
                     for aktuelle_zutat in zutaten:      # für variable in den angegebenen zutaten ( da man ja mehrere angeben kann wird hierdurch durch jede eingegebene gesuchte zutat iteriert und einzelne_zutat ist dann jeweils eine zutat der eingegebenen zutatenliste)
-                        if aktuelle_zutat in gesuchte_zutat.name.strip().lower() and xyz not in hit_list:  # wenn die aktuelle zutat aus zutaten teiltreffer mit zutatennamen in irgend nem rezept hat
-                            hit_list.append(xyz)        #ab inne liste rinne
+                        if aktuelle_zutat.strip().lower() in gesuchte_zutat.name.strip().lower() and recipe not in hit_list:  # wenn die aktuelle zutat aus zutaten teiltreffer mit zutatennamen in irgend nem rezept hat
+                            hit_list.append(recipe)        #ab inne liste rinne
                         
     
     return hit_list
