@@ -44,11 +44,13 @@ class JsonRezeptRepository:
 
         for zutat in recipe.zutaten:
             if zutat.zutat_id is None:
-                zutat.zutat_id = 1
-                highest_ingredient_id = 1
-            else:
-                if zutat.zutat_id < highest_ingredient_id: 
+                if highest_ingredient_id == 0:
+                        zutat.zutat_id = 1
+                        highest_ingredient_id = 1
+                else:
                     zutat.zutat_id = highest_ingredient_id + 1
+                    highest_ingredient_id = highest_ingredient_id + 1
+                 
                 
         self._gerichte.append(recipe)
         return recipe
