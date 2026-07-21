@@ -37,7 +37,18 @@ else:
 # [python ruft -m(odul) pytest auf | -> tests/test_api.py Pfad dieser Datei | -v = zeigt ob die tests erfolgreich waren, mit -s dahinter zeigt es auch noch die prints der responses]
 def test_create_recipe():
     response = client.post("/rezepte/speicher/erstellen",
-                           params=)
+                           json={"name":"Test_Rezept",
+                                   "zutaten":[{"zutatenname":"Test_Zutat",
+                                              "menge":"Test_Menge",
+                                              "einheit":"Test_Einheit"}],
+                                              "zubereitung":"Test_Zubereitung",
+                                              "gang":"Test_Gang",
+                                              "notizen":"Test_Notizen"})
+    
+    assert response.status_code == 201
+    print(response.status_code)
+    print(response.json())
+    
     
 
 def test_find_all_recipes():
@@ -49,7 +60,7 @@ def test_find_all_recipes():
     
 
 def test_find_recipe_by_name_endpoint():
-    response = client.get("/rezepte/suchen/",params={"name":"KAFFEEEEEEEEE"})
+    response = client.get("/rezepte/suchen/",params={"name":"Test_Rezept"})
 
 
     assert response.status_code == 200
@@ -57,7 +68,7 @@ def test_find_recipe_by_name_endpoint():
     print(response.json())
 
 def test_find_recipe_by_course_endpoint():
-    response = client.get("/rezepte/suchen/",params={"gang":"hauptspeiße"})
+    response = client.get("/rezepte/suchen/",params={"gang":"Test_Gang"})
 
 
     assert response.status_code == 200
@@ -65,7 +76,7 @@ def test_find_recipe_by_course_endpoint():
     print(response.json())
 
 def test_find_recipe_by_ingredient_endpoint():
-    response = client.get("/rezepte/suchen/",params={"zutaten":["Kaffeepulver"]})   #zutaten : ist ein query parameter, er sucht an dieser stelle jeden string der zutaten durch deshalb muss man nicht "name":"Kaffeepulver" schreiben, so kann sogar eine einheit gesucht werden oder die menge weil er in allen strings innerhalb der Liste zutaten sucht
+    response = client.get("/rezepte/suchen/",params={"zutaten":["Test_Zutat"]})   #zutaten : ist ein query parameter, er sucht an dieser stelle jeden string der zutaten durch deshalb muss man nicht "name":"Kaffeepulver" schreiben, so kann sogar eine einheit gesucht werden oder die menge weil er in allen strings innerhalb der Liste zutaten sucht
 
 
     assert response.status_code == 200
@@ -74,7 +85,7 @@ def test_find_recipe_by_ingredient_endpoint():
 
 
 def test_delete_recipe_endpoint():
-    response = client.delete("/rezepte/speicher/löschen/Schlammsuppe")
+    response = client.delete("/rezepte/speicher/löschen/",params={"name":"Test_Rezept"})
 
     assert response.status_code == 404
     print(response.status_code) 

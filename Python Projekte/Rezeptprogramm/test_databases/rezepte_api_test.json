@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "name": "Test_Rezept",
+    "gang": "Test_Gang",
+    "zubereitung": "Test_Zubereitung",
+    "notizen": "Test_Notizen",
+    "zutaten": [
+      {
+        "name": "Test_Zutat",
+        "menge": "Test_Menge",
+        "einheit": "Test_Einheit"
+      }
+    ]
+  }
+]
