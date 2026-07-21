@@ -174,6 +174,12 @@ def test_workflow(repo):
 
     result = service.find_exact_recipe(repo,1)
 
+    assert result is not None
+
+    assert "Test_Rezept 1" == result.name
+
+    assert 1 == result.rezept_id
+
     repo.add(model.Rezept("Test_Rezept 2",
                           [model.Zutaten("Test_Zutat 3",
                                         "Test_Menge 3",
@@ -190,17 +196,11 @@ def test_workflow(repo):
                                         "",
                                         2))
     
-    repo.add(result)
-
-    assert result is not None
-
-    assert "Test_Rezept 1" ==  result.name
-
     updated_recipe = schemas.RecipeUpdate(aenderung="rezept",rezept_id=1,zutat_id=None,name_neu=None,zutaten=[],zubereitung_neu=None,gang_neu="hauptspeiße",notizen_neu=None)
 
     service.update_recipe(repo,updated_recipe)
 
-    assert "hauptspeiße 1" == result.gang.lower().strip()
+    assert "hauptspeiße" == result.gang.lower().strip()
 
     find_recipe_2 = service.find_exact_recipe(repo,2)
 
@@ -213,6 +213,27 @@ def test_workflow(repo):
     assert ingredient_result is not None
 
     assert ingredient_result.name == "Test_Zutat 3"
+
+    any_search_result = service.match_any_search_recipes(repo,"Test_Rezept",None,None)
+
+    assert "Test_Rezept 1" and "Test_Rezept 2" in [recipe.name for recipe in any_search_result]
+
+    assert "Test_Zutat 1" and "Test_Zutat 2" and "Test_Zutat 3" and "Test_Zutat 4" in [zutat.name for recipe in any_search_result for zutat in recipe.zutaten]
+
+    
+    assert len(repo.all()) == 2
+
+    service.delete_recipe(repo,2)
+
+    assert len(repo.all()) == 1
+
+    service.delete_recipe(repo,1)
+
+    assert len(repo.all()) == 0
+
+    
+
+    
 
     
 

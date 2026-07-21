@@ -7,27 +7,38 @@ from rezeptliste_repository import JsonRezeptRepository
 
 client = TestClient(rezeptliste_api.app)
 
-TEST_BASE_DIR = Path(__file__).resolve().parent
+TEST_BASE_DIR = Path(__file__).resolve().parent.parent   #1. parent -> er geht vom pfad (...)Rezeptprogramm/tests/test_api.py zum pfad (...)Rezeptprogramm/tests/ und mit dem 2. parent erst zu (...)Rezeptprogramm
 
 TEST_DB_DATEI = TEST_BASE_DIR / "test_databases" / "rezepte_api_test.db"
-TEST_JSON_DATEI = TEST_BASE_DIR / "rezepte_api_test.json"
+TEST_JSON_DATEI = TEST_BASE_DIR / "test_databases" / "rezepte_api_test.json"
 
 
-switch = "sql"
+
+switch = "json"
 
 if switch == "sql":
+    if TEST_DB_DATEI.exists():
+        TEST_DB_DATEI.unlink()
     test_repo = SqlRezeptRepository(TEST_DB_DATEI)
     rezeptliste_api.repo = test_repo
-if switch == "json":
+elif switch == "json":
     test_repo =  JsonRezeptRepository(TEST_JSON_DATEI)
+    if TEST_JSON_DATEI.exists():
+        TEST_JSON_DATEI.unlink()
     rezeptliste_api.repo = test_repo
+    test_repo.save()
+else:
+    pass
+
 
 
 
 # python -m pytest tests/test_api.py -v    COMMANDBEFEHL FÜR API TEST
 # [python ruft -m(odul) pytest auf | -> tests/test_api.py Pfad dieser Datei | -v = zeigt ob die tests erfolgreich waren, mit -s dahinter zeigt es auch noch die prints der responses]
-def create_recipe():
-    response = client.("/rezepte/speicher/erstellen")
+def test_create_recipe():
+    response = client.post("/rezepte/speicher/erstellen",
+                           params=)
+    
 
 def test_find_all_recipes():
     response = client.get("/rezepte")
