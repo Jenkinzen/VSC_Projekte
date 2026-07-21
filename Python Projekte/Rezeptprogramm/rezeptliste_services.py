@@ -27,7 +27,7 @@ def find_exact_recipe(repo, recipe_id: int) -> Optional[model.Rezept]:
     else:
         return None
         
-def find_exact_ingredient(repo,recipe: model.Rezept, zutat_id: int) -> Optional[model.Zutaten]:
+def find_exact_ingredient(recipe: model.Rezept, zutat_id: int) -> Optional[model.Zutaten]:
 
 
     for ingredient in recipe.zutaten:
@@ -168,7 +168,7 @@ def update_recipe(repo, update_datas: schemas.RecipeUpdate) -> bool:
     
     elif update_datas.aenderung.lower().strip() == "zutat":
         if update_datas.zutat_id is not None:
-            ingredient_to_change = find_exact_ingredient(repo,recipe_to_update,update_datas.zutat_id)
+            ingredient_to_change = find_exact_ingredient(recipe_to_update,update_datas.zutat_id)
             if ingredient_to_change is not None:
                 for ingredientattribute in update_datas.zutaten:        #für das attribut, aus den zutatsattributen, das verändert werden soll
                     if any([ingredientattribute.name_neu is not None,ingredientattribute.menge_neu is not None,ingredientattribute.einheit_neu is not None]): 

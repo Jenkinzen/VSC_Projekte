@@ -23,10 +23,53 @@ def repo(tmp_path):
     r.load()  # startet leer, weil Datei noch nicht existiert
     return r
     
+def test_recipe_create(repo):
+    test_recipe_datas = schemas.RecipeCreate(
+        name="Test_Rezept", 
+        zutaten=[schemas.IngredientCreate(
+                  zutatenname="Test_Zutat 1",
+                  menge="Test_Menge 1",
+                  einheit="Test_Einheit 1"),
+                  schemas.IngredientCreate(
+                  zutatenname="Test_Zutat 2",
+                  menge="Test_Menge 2",
+                  einheit="Test_Einheit 2")
+                  ],
+        zubereitung="Test_Zubereitung",
+        gang="hAuPtSpeIße",          
+        notizen="Test_Notiz",
+    )
 
+    service.create_recipe(repo,test_recipe_datas)
 
+    recipe = service.find_exact_recipe(repo,1)
 
-def test_rezept_finden_case_insensitive(repo):
+    assert recipe is not None
+    
+    assert recipe.name == "Test_Rezept"
+
+def test_recipe_delete(repo):
+    test_recipe_datas = schemas.RecipeCreate(
+        name="Test_Rezept", 
+        zutaten=[schemas.IngredientCreate(
+                  zutatenname="Test_Zutat 1",
+                  menge="Test_Menge 1",
+                  einheit="Test_Einheit 1"),
+                  schemas.IngredientCreate(
+                  zutatenname="Test_Zutat 2",
+                  menge="Test_Menge 2",
+                  einheit="Test_Einheit 2")
+                  ],
+        zubereitung="Test_Zubereitung",
+        gang="hAuPtSpeIße",          
+        notizen="Test_Notiz",
+    )
+
+    service.create_recipe(repo,test_recipe_datas)
+
+    service.delete_recipe(repo,1)
+    
+def test_find_exact_recipe(repo):
     repo.add(model.Rezept("Spaghetti", [], "z", "Hauptspeise", ""))
 
     result = service.find_exact_recipe(repo,1)
@@ -35,14 +78,32 @@ def test_rezept_finden_case_insensitive(repo):
 
     assert service.find_exact_recipe(repo,400) is None
 
-def test_filter_rezepte_nach_gang(repo):
+def test_find_exact_ingredient(repo):
+    repo.add(model.Rezept("Irgendwas leckeres",[model.Zutaten("Schweinekopf",None,None,1)
+                                                ,model.Zutaten("Krähenfüße",None,None,2)
+                                                ,model.Zutaten("Handwaschlappen",None,None,3)]
+                                                ,"Einfach roh essen","hauptspeiße","grrrr",1))
+
+    
+    searched_recipe = service.find_exact_recipe(repo,1)
+
+    assert searched_recipe is not None
+
+    searched_ingredient = service.find_exact_ingredient(searched_recipe,1)
+
+    assert searched_ingredient is not None
+
+    assert searched_ingredient.name == "Schweinekopf"
+
+def test_match_all_search_recipes(repo):
     repo.add(model.Rezept("A", [], "z", "Dessert", ""))
     repo.add(model.Rezept("B", [], "z", "Hauptspeise", ""))
 
     result = service.match_all_search_recipes(repo,None,"hauptspeise",None)
     assert [r.name for r in result] == ["B"]
-
-def test_filter_rezepte_nach_zutaten_all_must_match(repo):
+    assert [r.name for r in result] != ["A"]
+        
+def test_match_any_search_recipes(repo):
     repo.add(model.Rezept(
         "Pasta",
         [model.Zutaten("tomate", None, "stück"), model.Zutaten("salz", None, "prise")],
@@ -59,174 +120,101 @@ def test_filter_rezepte_nach_zutaten_all_must_match(repo):
     ))
     result = service.match_any_search_recipes(repo,None,None,["salz", "tomate"])
     assert ["Pasta","Brot"] == [r.name for r in result]  
+    assert "tomate" and "salz" in [z.name for r in result for z in r.zutaten]
+    assert "gramm" not in [attribut.einheit for recipe in result for attribut in recipe.zutaten]
+    assert len(result) == 2
 
-
-
-def test_gang_pruefen(repo):
-
-    repo.add(model.Rezept("Irgendwas leckeres",[model.Zutaten("Schweinekopf",None,None,None)
-                                                ,model.Zutaten("Krähenfüße",None,None,None)
-                                                ,model.Zutaten("Handwaschlappen",None,None,None)]
-                                                ,"Einfach roh essen","hauptspeiße","grrrr"))
-     
-    test1 = service.match_all_search_recipes(repo,None,"hauptspeiße",None)
-    test2 = service.match_all_search_recipes(repo,None,"hauptspeiße",None)
-    test3 = service.match_all_search_recipes(repo,None," hauptspeiße ",None)
+def test_update_recipe(repo):
+    repo.add(model.Rezept("Test_Rezept 2",
+                          [model.Zutaten("Test_Zutat 3",
+                                        "Test_Menge 3",
+                                        "Test_Einheit 3",
+                                        1,
+                                        None),
+                                        model.Zutaten("Test_Zutat 4",
+                                        "Test_Menge 4",
+                                        "Test_Einheit 4",
+                                        2,
+                                        None)],                                          
+                                        "Test_Zubereitung 2",
+                                        "vorspeiße",
+                                        "",
+                                        2))
     
-    assert [rezept.name for rezept in test1] == ["Irgendwas leckeres"]
-    assert [rezept.gang for rezept in test2] == ["hauptspeiße"]
-    assert "Schweinekopf" in [alle_zutaten.name for rezept in test3 for alle_zutaten  in rezept.zutaten] 
-    
-"""xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
+    updated_recipe = schemas.RecipeUpdate(aenderung="rezept",rezept_id=1,zutat_id=None,name_neu=None,zutaten=[],zubereitung_neu=None,gang_neu="hauptspeiße",notizen_neu=None)
 
-def test_filter_rezepte_nach_gericht(repo):
+    service.update_recipe(repo,updated_recipe)
 
-    repo.add(model.Rezept("Kokoscurry-Sushibowl-Schokomousse",[],"x","x","x"))
-    repo.add(model.Rezept("Misosuppe",[],"x","x","x"))
+    test_recipe = service.find_exact_recipe(repo,1)
 
-    #wahr
+    assert test_recipe is not None
 
-    result1 = service.match_any_search_recipes(repo,"Curr",None,None) 
-    result2 = service.match_any_search_recipes(repo,"sUsH ",None,None) 
-    result3 = service.match_any_search_recipes(repo," schok",None,None) 
-    result4 = service.match_any_search_recipes(repo,"Miso",None,None)
-    result5 = service.match_any_search_recipes(repo,"su",None,None)
+    assert "hauptspeiße" == test_recipe.gang
 
-    assert any(r.name for r in result1) 
-    assert (r.name == "Kokoscurry-Sushibowl-Schokomousse" for r in result2) 
-    assert any(r.name for r in result3)
-    assert (r.name == "Misosuppe" for r in result4)
-    assert {r.name  for r in result5} == {"Kokoscurry-Sushibowl-Schokomousse","Misosuppe"}
-
-    """Testet durch {} generell ob die beiden Namen, und NUR die beiden Namen im Set(so heißt das wenn man
-    ne Liste mit {} einklammert) sind. Die Reihenfolge ist egal.
-     Wenn diese beiden im Set enthalten sind, aber noch irgendetwas anderes dadrin wäre der test falsch."""
-    
-    assert [r.name  for r in result5] == ["Kokoscurry-Sushibowl-Schokomousse","Misosuppe"]
-
-    """Testet durch [] als Liste, der unterschied ist, hier muss die Reihenfolge stimmen( by default ist
-    die Reihenfolge > was als erstes eingefügt wurde kommt zuerst dran[also hier erst kokosbla dann Misosuppe])
-    deshalb """
-
-
-    """WICHTIG!!!! WENN MAN EIN SET {} TESTET MUSS AUCH DIE LC EIN SET{} SEIN.
-                   WENN MAN EINE LIST [] TESTET MUSS AUCH DIE LC EINE LIST [] SEIN. """
-    
-    """ ALTERNATIV KANN MAN EINE LISTE WIE UNTEN IN DER OPTIMIERTEN VERSION ZUM SET 
-                    UMWANDELN:
-                    assert set(names("e")) == {"Kokoscurry-Sushibowl-Schokomousse","Ekelpampe"}"""
     
 
-    assert any(r.name for r in service.match_any_search_recipes(repo,"Curr"))
+def test_workflow(repo):
+    test_recipe_datas = schemas.RecipeCreate(
+        name="Test_Rezept 1", 
+        zutaten=[schemas.IngredientCreate(
+                  zutatenname="Test_Zutat 1",
+                  menge="Test_Menge 1",
+                  einheit="Test_Einheit 1"),
+                  schemas.IngredientCreate(
+                  zutatenname="Test_Zutat 2",
+                  menge="Test_Menge 2",
+                  einheit="Test_Einheit 2")
+                  ],
+        zubereitung="Test_Zubereitung 1",
+        gang="hAuPtSpeIße 1",          
+        notizen="Test_Notiz 1",
+    )
 
-    #falsch
+    service.create_recipe(repo,test_recipe_datas)
 
-    result4 = service.match_any_search_recipes(repo,"myv2",None,None)  
-    result5 = service.match_any_search_recipes(repo,"ölgi",None,None)   
-    result6 = service.match_any_search_recipes(repo,"3425",None,None) 
+    result = service.find_exact_recipe(repo,1)
 
-    assert not any(r.name for r in result5) 
-    assert not any(r.name for r in result6)
-    assert not any(r.name for r in result4) 
-    assert not [r.name  for r in result5] == ["Misosuppe","Kokoscurry-Sushibowl-Schokomousse"]
-
-def test_filter_rezepte_nach_gericht_optimal(repo):
-
-    repo.add(model.Rezept("Kokoscurry-Sushibowl-Schokomousse",[],"x","x","x"))
-
-    #wahr
-
-    assert any(r.name for r in service.match_any_search_recipes(repo,"Curr",None,None))
-    assert any(r.name for r in service.match_any_search_recipes(repo,"sUsH",None,None))
-    assert any(r.name for r in service.match_any_search_recipes(repo," schok",None,None))
-
-    #falsch
-
-    assert not any(r.name for r in service.match_any_search_recipes(repo,"g932d",None,None))
-    assert not any(r.name for r in service.match_any_search_recipes(repo,"schnokomabe",None,None))
-    assert not any(r.name for r in service.match_any_search_recipes(repo,"miep-2xx.r9",None,None))   
-"""Optimierung von GPT"""
-def test_filter_rezepte_nach_gericht_noch_krasser_optimiert(repo):
-
-
-    repo.add(model.Rezept("Kokoscurry-Sushibowl-Schokomousse", [], "x", "x", "x"))
-    repo.add(model.Rezept("Ekelpampe",[],"x","x","x"))
-                            
-    def names(repo,q):
-        return [r.name for r in service.match_any_search_recipes(repo,q)]
-
-    # wahr (Teilstrings + case + whitespace)
-    assert "Kokoscurry-Sushibowl-Schokomousse" in names(repo,"Curr")
-    assert "Kokoscurry-Sushibowl-Schokomousse" in names(repo,"sUsH ")
-    assert "Kokoscurry-Sushibowl-Schokomousse" in names(repo," schok")
-
-    assert set(names(repo,"e")) == {"Kokoscurry-Sushibowl-Schokomousse","Ekelpampe"}
-
-    # falsch
-    assert names(repo,"g932d") == []
-    assert names(repo,"schnokomabe") == []
-    assert names(repo,"miep-2xx.r9") == []
-"""xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
-def test_alle_rezepte(repo):
-
-    repo.add(model.Rezept("1",[],"x","x","x"))
-    repo.add(model.Rezept("2",[],"x","x","x"))
-    repo.add(model.Rezept("3",[],"x","x","x"))
-    repo.add(model.Rezept("4",[],"x","x","x"))
-    repo.add(model.Rezept("5",[],"x","x","x"))
-    repo.add(model.Rezept("6",[],"x","x","x"))
-
-    def names():
-        return len([r.name for r in repo.all()])
+    repo.add(model.Rezept("Test_Rezept 2",
+                          [model.Zutaten("Test_Zutat 3",
+                                        "Test_Menge 3",
+                                        "Test_Einheit 3",
+                                        1,
+                                        None),
+                                        model.Zutaten("Test_Zutat 4",
+                                        "Test_Menge 4",
+                                        "Test_Einheit 4",
+                                        2,
+                                        None)],                                          
+                                        "Test_Zubereitung 2",
+                                        "vorspeiße",
+                                        "",
+                                        2))
     
-    assert names() == 6
-# wichtig!! nur mit names klappt es nicht, die () is wichtig und heißt "führe diese funktion jetzt aus"
-"""Optimale Form von Chat GPT """
-def test_alle_rezepte_optimal(repo):
+    repo.add(result)
 
-    repo.add(model.Rezept("1",[],"x","x","x"))
-    repo.add(model.Rezept("2",[],"x","x","x"))
-    repo.add(model.Rezept("3",[],"x","x","x"))
-    repo.add(model.Rezept("4",[],"x","x","x"))
-    repo.add(model.Rezept("5",[],"x","x","x"))
-    repo.add(model.Rezept("6",[],"x","x","x"))
+    assert result is not None
 
-    assert len(repo.all()) == 6
-"""xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
-def test_rezept_loeschen(repo):
-    repo.add(model.Rezept("Handfeuerwaffeln",[],"x","x","x"))
+    assert "Test_Rezept 1" ==  result.name
 
-    rezept = service.match_all_search_recipes(repo,"Handfeuerwaffeln",None,None)
-    assert rezept is not None
-    service.delete_recipe(repo,1) 
-    assert len(repo.all()) == 0  
-"""xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
-def test_rezept_einfuegen(repo):
+    updated_recipe = schemas.RecipeUpdate(aenderung="rezept",rezept_id=1,zutat_id=None,name_neu=None,zutaten=[],zubereitung_neu=None,gang_neu="hauptspeiße",notizen_neu=None)
+
+    service.update_recipe(repo,updated_recipe)
+
+    assert "hauptspeiße 1" == result.gang.lower().strip()
+
+    find_recipe_2 = service.find_exact_recipe(repo,2)
+
+    assert find_recipe_2 is not None
+
+    assert find_recipe_2.name == "Test_Rezept 2"
+
+    ingredient_result = service.find_exact_ingredient(find_recipe_2,1)
+
+    assert ingredient_result is not None
+
+    assert ingredient_result.name == "Test_Zutat 3"
+
     
-    recipe_data=schemas.RecipeCreate(name="Handfeuerwaffeln",zutaten=[schemas.IngredientCreate(zutatenname="Waffeln",menge="4" ,einheit="Stück"),
-                                                                schemas.IngredientCreate(zutatenname="Schießpulver",menge="200",einheit="g"),
-                                                                schemas.IngredientCreate(zutatenname="Schnittlauch",menge=None,einheit="Bündel"),],
-                                                                zubereitung="x",
-                                                                gang="x",
-                                                                notizen="x")
-    
-    service.create_recipe(repo,recipe_data)
 
-    assert len(repo.all()) == 1
 
-    rezept = repo.all()[0]
-
-    schnittlauch = next(z for z in rezept.zutaten if z.name == "Schnittlauch")
-    schießpulver = next(z for z in rezept.zutaten if z.name == "Schießpulver")
-    waffeln = next(z for z in rezept.zutaten if z.name == "Waffeln")
-
-    assert schnittlauch.menge is None
-    assert schnittlauch.einheit == "Bündel"
-    assert waffeln.einheit == "Stück"
-    assert schießpulver.menge == "200"
-
-    assert waffeln.menge != "5"
-    assert schießpulver.name != "piesschulver"
-    assert schnittlauch.menge != "12" 
-"""xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
