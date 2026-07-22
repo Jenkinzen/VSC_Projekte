@@ -137,7 +137,7 @@ class SqlRezeptRepository:
     def create_tables(self):
         self._connection.execute("""
         CREATE TABLE IF NOT EXISTS recipes (
-                                 id INTEGER PRIMARY KEY AUTOINCREMENT,          
+                                 recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,          
                                  name TEXT NOT NULL UNIQUE,
                                  zubereitung TEXT NOT NULL,
                                  gang TEXT NOT NULL,
@@ -147,19 +147,19 @@ class SqlRezeptRepository:
                                                                     # eine eigene Zahl zugewiesen / UNIQUE -> darf nur 1 mal so vorkommen ( damit man nicht mehrere gleiche Rezeptnamen in die SQL packen kann)
         self._connection.execute("""
                                  CREATE TABLE IF NOT EXISTS recipe_ingredients(
-                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                 ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                  recipe_id INTEGER NOT NULL,
                                  zutatenname TEXT NOT NULL,
                                  menge TEXT,
                                  einheit TEXT,
-                                 FOREIGN KEY (recipe_id) REFERENCES recipes(id))
+                                 FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id))
                                  """)
         
         self._connection.commit()
 
     def all(self) -> list[model.Rezept]:
         recipe_rows = self._connection.execute(
-            """SELECT id AS recipe_id, name, zubereitung, gang, notizen
+            """SELECT recipe_id, name, zubereitung, gang, notizen
             FROM recipes
             """
         ).fetchall() # hol mir die oben SELECTeten Daten alle ( gibt auch fetchone (erste Datei[mit Datei ist eine Zeile gemeint also ein Rezept mit allen attributen]))
@@ -169,7 +169,7 @@ class SqlRezeptRepository:
         for recipe_row in recipe_rows:
             ingredient_rows = self._connection.execute(
                 """
-                SELECT id AS ingredient_id,zutatenname, menge, einheit
+                SELECT ingredient_id,zutatenname, menge, einheit
                 FROM recipe_ingredients
                 WHERE recipe_id = ?
                 """,(recipe_row["recipe_id"],)
@@ -203,7 +203,7 @@ class SqlRezeptRepository:
 
         return rezepte
 
-    def add(self,rezept: model.Rezept):
+    def add(self,rezept: model.Rezept) -> model.Rezept:
         cursor = self._connection.execute("""
                                             INSERT INTO recipes (name,zubereitung,gang,notizen)
                                             VALUES(?,?,?,?)""",(
@@ -228,7 +228,23 @@ class SqlRezeptRepository:
             )
             
         self._connection.commit()
-        return rezept
+
+        #die rückgabewerte hier drunter kommen als tupel zurück, also das erste statement = (recipe_id,name,zubereitung,gang,notizen)
+        # und das zweite statement = (id,recipe_id,zutatenname,menge,einheit)
+        recipe_rows = self._connection.execute("""SELECT * FROM recipes WHERE recipe_id = ? """,(recipe_id,)).fetchone()
+        ingredient_rows = self._connection.execute("""SELECT * FROM recipe_ingredients WHERE recipe_id = ?""",(recipe_id,))
+
+        zutaten = []
+
+
+
+        for row in ingredient_rows:
+            zutat = model.Zutaten(name=row["zutatenname"],menge=row["menge"],einheit=row["einheit"],zutat_id=row["ingredient_id"],rezept_id=row["recipe_id"])
+            zutaten.append(zutat)
+
+        created_recipe = model.Rezept(name=recipe_rows["name"],zutaten=zutaten,zubereitung=recipe_rows["zubereitung"],gang=recipe_rows["gang"],notizen=recipe_rows["notizen"],rezept_id=recipe_rows["recipe_id"])
+
+        return created_recipe
 
     def update(self,rezept: model.Rezept):
         self._connection.execute("""

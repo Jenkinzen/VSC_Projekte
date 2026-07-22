@@ -14,7 +14,7 @@ TEST_JSON_DATEI = TEST_BASE_DIR / "test_databases" / "rezepte_api_test.json"
 
 
 
-switch = "json"
+switch = "sql"
 
 if switch == "sql":
     if TEST_DB_DATEI.exists():
