@@ -49,15 +49,14 @@ def test_create_recipe():
     print(response.status_code)
     print(response.json())
     
-    
-
 def test_find_all_recipes():
     response = client.get("/rezepte")
 
     assert response.status_code == 200
     print(response.status_code)
     print(response.json())
-    
+
+
 
 def test_find_recipe_by_name_endpoint():
     response = client.get("/rezepte/suchen/",params={"name":"Test_Rezept"})
@@ -79,20 +78,54 @@ def test_find_recipe_by_ingredient_endpoint():
     response = client.get("/rezepte/suchen/",params={"zutaten":["Test_Zutat"]})   #zutaten : ist ein query parameter, er sucht an dieser stelle jeden string der zutaten durch deshalb muss man nicht "name":"Kaffeepulver" schreiben, so kann sogar eine einheit gesucht werden oder die menge weil er in allen strings innerhalb der Liste zutaten sucht
 
 
+
+def test_find_exact_recipe_endpoint():
+    client.post("/rezepte/speicher/erstellen",
+                               json={"name":"Test_Rezept z",
+                                       "zutaten":[{"zutatenname":"Test_Zutat",
+                                                  "menge":"Test_Menge",
+                                                  "einheit":"Test_Einheit"}],
+                                                  "zubereitung":"Test_Zubereitung",
+                                                  "gang":"Test_Gang",
+                                                  "notizen":"Test_Notizen"})
+    
+    response = client.get("/rezepte/exakt/1")
+
     assert response.status_code == 200
     print(response.status_code)
     print(response.json())
-
-
+    
 def test_delete_recipe_endpoint():
-    response = client.delete("/rezepte/speicher/löschen/",params={"name":"Test_Rezept"})
+    client.post("/rezepte/speicher/erstellen",
+                                   json={"name":"Test_Rezept x",
+                                           "zutaten":[{"zutatenname":"Test_Zutat",
+                                                      "menge":"Test_Menge",
+                                                      "einheit":"Test_Einheit"}],
+                                                      "zubereitung":"Test_Zubereitung",
+                                                      "gang":"Test_Gang",
+                                                      "notizen":"Test_Notizen"})
+    
+    response = client.delete("/rezepte/speicher/löschen/1")
 
-    assert response.status_code == 404
+    assert response.status_code == 200
     print(response.status_code) 
     print(response.json())
 
+def test_update_recipe_endpoint():
+    client.post("/rezepte/speicher/erstellen",
+                               json={"name":"Test_Rezept y",
+                                       "zutaten":[{"zutatenname":"Test_Zutat",
+                                                  "menge":"Test_Menge",
+                                                  "einheit":"Test_Einheit"}],
+                                                  "zubereitung":"Test_Zubereitung",
+                                                  "gang":"Test_Gang",
+                                                  "notizen":"Test_Notizen"})
 
+    response = client.get("/rezepte/suchen",params={"name":"Test_Rezept y"})
 
+    assert response.status_code == 200
+    print(response.status_code) 
+    print(response.json())
 
 
 

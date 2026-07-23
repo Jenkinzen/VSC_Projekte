@@ -260,7 +260,7 @@ class SqlRezeptRepository:
 
     def remove(self,rezept: model.Rezept) -> None:
         recipe_row = self._connection.execute("""
-                                    SELECT id
+                                    SELECT recipe_id
                                  FROM recipes
                                  WHERE name = ?
                                     """,                    # erst in """ das sql Statement mit ? als variablenplatzhalter und danach "," und dann in klammern die variable, bei mehreren ? chronologisch in klammern (variable1,variable2,etc..) 
@@ -269,7 +269,7 @@ class SqlRezeptRepository:
         if recipe_row is None:
             return
         
-        recipe_id = recipe_row["id"]
+        recipe_id = recipe_row["recipe_id"]
 
         self._connection.execute(
             """DELETE FROM recipe_ingredients
@@ -280,7 +280,7 @@ class SqlRezeptRepository:
 
         self._connection.execute(
             """DELETE FROM recipes
-            WHERE id = ?
+            WHERE recipe_id = ?
             """,
             (recipe_id,)
         )

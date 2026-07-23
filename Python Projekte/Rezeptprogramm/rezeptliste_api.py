@@ -89,8 +89,8 @@ def search_recipes(
     
     
 
-@app.get("/rezepte/exakt/{sucheingabe}", status_code=200,response_model=schemas.RecipeResponse)
-def find_recipe_endpoint(recipe_id: int):
+@app.get("/rezepte/exakt/{recipe_id}", status_code=200,response_model=schemas.RecipeResponse)
+def find_exact_recipe_endpoint(recipe_id: int):
     recipe = service.find_exact_recipe(repo, recipe_id)                 # repo -> yo hier ist mein repo, service.rezept_finden sucht dir raus was du brauchst und ich übergeb es dir dann!
 
     if recipe is None:
@@ -108,9 +108,9 @@ def create_recipe_endpoint(rezept_daten: schemas.RecipeCreate):      #rezept_dat
     
     return createdrecipe
 
-@app.delete("/rezepte/speicher/löschen/{rezeptname}", status_code=200,response_model=schemas.MessageResponse)
-def delete_recipe_endpoint(rezept_id: int):
-    deletedrecipe = service.delete_recipe(repo,rezept_id)
+@app.delete("/rezepte/speicher/löschen/{recipe_id}", status_code=200,response_model=schemas.MessageResponse)
+def delete_recipe_endpoint(recipe_id: int):
+    deletedrecipe = service.delete_recipe(repo,recipe_id)
 
     if not deletedrecipe:           # is None ist hier fehleranfällig weil die delete_recipe funktion nur True oder False zurückgibt und kein erstelltes rezept oder ein gesuchtes rezept
         raise fastapi.HTTPException(status_code=404, detail="Löschung ist fehlgeschlagen!")
