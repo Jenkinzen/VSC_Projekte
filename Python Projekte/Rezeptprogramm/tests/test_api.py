@@ -6,32 +6,32 @@ from rezeptliste_repository import SqlRezeptRepository
 from rezeptliste_repository import JsonRezeptRepository
 
 
-client = TestClient(rezeptliste_api.app)
+
 
 TEST_BASE_DIR = Path(__file__).resolve().parent.parent   #1. parent -> er geht vom pfad (...)Rezeptprogramm/tests/test_api.py zum pfad (...)Rezeptprogramm/tests/ und mit dem 2. parent erst zu (...)Rezeptprogramm
 
-TEST_DB_DATEI = TEST_BASE_DIR / "test_databases" / "rezepte_api_test.db"
+
 TEST_JSON_DATEI = TEST_BASE_DIR / "test_databases" / "rezepte_api_test.json"
 
-sqltestconnection = sql.connect(TEST_DB_DATEI)
 
 switch = "sql"
 
-if switch == "sql":
-    if TEST_DB_DATEI.exists():
-        TEST_DB_DATEI.unlink()
+if switch == "sql":      
+    sqltestconnection = sql.connect(":memory:",check_same_thread=False)
     test_repo = SqlRezeptRepository(sqltestconnection)
     rezeptliste_api.repo = test_repo
+
 elif switch == "json":
     test_repo =  JsonRezeptRepository(TEST_JSON_DATEI)
     if TEST_JSON_DATEI.exists():
         TEST_JSON_DATEI.unlink()
     rezeptliste_api.repo = test_repo
     test_repo.save()
+
 else:
     pass
 
-
+client = TestClient(rezeptliste_api.app)
 
 
 # python -m pytest tests/test_api.py -v    COMMANDBEFEHL FÜR API TEST

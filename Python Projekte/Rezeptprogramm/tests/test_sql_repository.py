@@ -1,7 +1,7 @@
 import pytest
 import rezeptliste_model as model
 from rezeptliste_repository import SqlRezeptRepository
-import sqlite3
+import sqlite3 as sql
 
 
 @pytest.fixture
@@ -11,12 +11,18 @@ def test_rezept():
 
 @pytest.fixture
 def sql_repo():
-    connection = sqlite3.connect(":memory:")
-    connection.execute("PRAGMA foreign_keys = ON")
+    connection = sql.connect(":memory:",check_same_thread=False)
+    connection.execute("PRAGMA foreign_keys = ON",)
 
-    repo = SqlRezeptRepository(connection)
-    repo.create_tables()
+    sql_repo = SqlRezeptRepository(connection)
 
-    yield repo
+    yield sql_repo
 
     connection.close()
+
+def test_add_and_all(sql_repo,test_rezept):
+    created_recipe = sql_repo.add(test_rezept)
+
+    sql_repo.all()
+
+    assert len(sql_repo.all()) == 1

@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent
 
 
 DB_DATEI = BASE_DIR / "databases" / "rezepte.db"
-sqlconnection = sql.connect(DB_DATEI, check_same_thread=False)
+
 
 
 DATEI = BASE_DIR / "databases" / "rezepte.json" #link zum speicherort der json Datei
@@ -31,6 +31,7 @@ if REPOSITORY_TYP == "json":
     repo.load()
 
 elif REPOSITORY_TYP =="sql":
+    sqlconnection = sql.connect(DB_DATEI, check_same_thread=False)
     repo = SqlRezeptRepository(sqlconnection)
 
 else:
