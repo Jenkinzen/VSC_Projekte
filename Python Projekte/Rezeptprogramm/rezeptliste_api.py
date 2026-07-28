@@ -4,6 +4,7 @@ import rezeptliste_services as service
 from rezeptliste_repository import JsonRezeptRepository 
 from rezeptliste_repository import SqlRezeptRepository
 import fastapi
+import sqlite3 as sql
 from typing import List
 import rezeptliste_model as model
 import rezeptliste_schemas as schemas
@@ -12,7 +13,10 @@ app = fastapi.FastAPI()  #erstellt API Anwendung
 
 BASE_DIR = Path(__file__).resolve().parent
 
+
 DB_DATEI = BASE_DIR / "databases" / "rezepte.db"
+sqlconnection = sql.connect(DB_DATEI, check_same_thread=False)
+
 
 DATEI = BASE_DIR / "databases" / "rezepte.json" #link zum speicherort der json Datei
 
@@ -27,7 +31,7 @@ if REPOSITORY_TYP == "json":
     repo.load()
 
 elif REPOSITORY_TYP =="sql":
-    repo = SqlRezeptRepository(DB_DATEI)
+    repo = SqlRezeptRepository(sqlconnection)
 
 else:
     raise ValueError("Unbekannter Repository-Typ")

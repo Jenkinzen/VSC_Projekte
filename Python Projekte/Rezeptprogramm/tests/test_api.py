@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 import rezeptliste_api 
+import sqlite3 as sql
 from pathlib import Path
 from rezeptliste_repository import SqlRezeptRepository
 from rezeptliste_repository import JsonRezeptRepository
@@ -12,14 +13,14 @@ TEST_BASE_DIR = Path(__file__).resolve().parent.parent   #1. parent -> er geht v
 TEST_DB_DATEI = TEST_BASE_DIR / "test_databases" / "rezepte_api_test.db"
 TEST_JSON_DATEI = TEST_BASE_DIR / "test_databases" / "rezepte_api_test.json"
 
-
+sqltestconnection = sql.connect(TEST_DB_DATEI)
 
 switch = "sql"
 
 if switch == "sql":
     if TEST_DB_DATEI.exists():
         TEST_DB_DATEI.unlink()
-    test_repo = SqlRezeptRepository(TEST_DB_DATEI)
+    test_repo = SqlRezeptRepository(sqltestconnection)
     rezeptliste_api.repo = test_repo
 elif switch == "json":
     test_repo =  JsonRezeptRepository(TEST_JSON_DATEI)

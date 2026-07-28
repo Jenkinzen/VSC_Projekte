@@ -127,9 +127,8 @@ class JsonRezeptRepository:
 
 
 class SqlRezeptRepository:
-    def __init__(self,db_datei: Path):
-        self._db_datei = db_datei
-        self._connection = sql.connect(self._db_datei,check_same_thread=False)     #hier kommt kein DB pfad in die klammer, der wird in rezeptliste_api definiert (SoC + universales repo für verschiedene DB's)
+    def __init__(self,connection: sql.Connection):
+        self._connection = connection     #hier kommt kein DB pfad in die klammer, der wird in rezeptliste_api definiert (SoC + universales repo für verschiedene DB's)
         self._connection.row_factory = sql.Row                                     # dafür damit man später spalten als name lesen kann
         self._connection.execute("PRAGMA foreign_keys = ON")                       # check_same_thread=False ist dafür das mehrere Programmprozesse gleichzeitig mit sql connecten können ohne das sql stresst ( quasi TCP aber bezogen auf Programmprozesse und nicht Serververbindungen)
         self.create_tables() 
@@ -246,18 +245,6 @@ class SqlRezeptRepository:
 
         return created_recipe
 
-    def update(self,rezept: model.Rezept):
-        self._connection.execute("""
-            UPDATE recipes SET name = ?,zubereitung = ?,gang = ?,notizen = ? WHERE id = ?""",
-            (rezept.name,rezept.zubereitung,rezept.gang,rezept.notizen,rezept.rezept_id,))
-        
-        for zutat in rezept.zutaten:
-            self._connection.execute("""
-                UPDATE recipe_ingredients SET zutatenname = ?,menge = ?, einheit = ? WHERE recipe_id = ?""",
-                (zutat.name,zutat.menge,zutat.einheit,zutat.rezept_id))
-            
-        self._connection.commit()
-
     def remove(self,rezept: model.Rezept) -> None:
         recipe_row = self._connection.execute("""
                                     SELECT recipe_id
@@ -286,5 +273,24 @@ class SqlRezeptRepository:
         )
 
         self._connection.commit()
+
+    def load(self):
+        pass
+
+    def save(self):
+        pass
+
+    def update(self,rezept: model.Rezept):
+        self._connection.execute("""
+            UPDATE recipes SET name = ?,zubereitung = ?,gang = ?,notizen = ? WHERE recipe_id = ?""",
+            (rezept.name,rezept.zubereitung,rezept.gang,rezept.notizen,rezept.rezept_id,))
+        
+        for zutat in rezept.zutaten:
+            self._connection.execute("""
+                UPDATE recipe_ingredients SET zutatenname = ?,menge = ?, einheit = ? WHERE recipe_id = ?""",
+                (zutat.name,zutat.menge,zutat.einheit,zutat.rezept_id))
+            
+        self._connection.commit()
+
 
  
